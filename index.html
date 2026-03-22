@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ind AS Accounting Copilot | Vipin Nair</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f0f2f5}
+.app-header{background:linear-gradient(135deg,#1d8492 0%,#4fd67c 50%,#1a3a6c 100%)}
+.sidebar{width:272px;min-width:272px;background:#fff;border-right:1px solid #e2e8f0;overflow-y:auto}
+.main-scroll{flex:1;overflow-y:auto}
+.mode-btn{transition:all .15s;cursor:pointer;border:1px solid transparent;border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:3px}
+.mode-btn.active{background:#eff6ff;border-color:#3b82f6;color:#1d4ed8;font-weight:600}
+.mode-btn:hover:not(.active){background:#f8fafc}
+.tab-btn{padding:9px 18px;border-bottom:2px solid transparent;font-size:13px;font-weight:500;color:#64748b;cursor:pointer;white-space:nowrap;transition:all .12s}
+.tab-btn.active{border-bottom-color:#1d4ed8;color:#1d4ed8;font-weight:600}
+.tab-btn:hover:not(.active){color:#334155}
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04)}
+.je-table{width:100%;border-collapse:collapse;font-size:13px}
+.je-table th{background:#f1f5f9;padding:8px 12px;text-align:left;color:#475569;font-weight:600;font-size:12px;border:1px solid #e2e8f0}
+.je-table td{padding:8px 12px;border:1px solid #e2e8f0;color:#334155}
+.je-table .dr{color:#1d4ed8;font-weight:600}
+.je-table .cr{color:#15803d;font-weight:600;padding-left:28px}
+.je-table .narr{font-style:italic;color:#64748b;font-size:12px;background:#f8fafc}
+.badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;display:inline-block}
+.b-low{background:#dcfce7;color:#15803d}.b-med{background:#fef9c3;color:#a16207}.b-high{background:#fee2e2;color:#b91c1c}
+.para-ref{background:#eff6ff;color:#1d4ed8;font-size:11px;padding:2px 7px;border-radius:4px;margin:2px;display:inline-block}
+.std-badge{display:inline-block;padding:4px 12px;border-radius:6px;font-size:13px;font-weight:700}
+.select-s{background:#fff;border:1px solid #e2e8f0;border-radius:7px;padding:7px 10px;font-size:13px;width:100%;color:#334155;cursor:pointer}
+.select-s:focus{outline:none;border-color:#3b82f6}
+.upload-zone{border:2px dashed #cbd5e1;border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover{border-color:#3b82f6;background:#eff6ff}
+.memo-s{border-left:3px solid #3b82f6;padding-left:14px;margin-bottom:18px}
+.d-block{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:12px;font-size:13px;line-height:1.7}
+.cs-card{border:1px solid #e2e8f0;border-radius:10px;padding:14px;cursor:pointer;transition:all .15s}
+.cs-card:hover{border-color:#3b82f6;box-shadow:0 2px 8px rgba(59,130,246,.12);transform:translateY(-1px)}
+.follow-chip{background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;transition:all .15s}
+.follow-chip:hover{background:#dbeafe}
+.context-note{background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#854d0e;margin-bottom:12px}
+.ctx-tag{background:#e0e7ff;color:#3730a3;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;margin-right:4px}
+.multi-std-strip{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0}
+.animate-spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#f1f5f9}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+@media print{.no-print{display:none!important}.sidebar{display:none!important}.app-header{display:none!important}body{background:#fff}.card{box-shadow:none;border:1px solid #e2e8f0}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef,useEffect,useCallback}=React;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   KNOWLEDGE BASE — Ind AS Standards
+   ═══════════════════════════════════════════════════════════════════════════ */
+const STDS={
+'115':{id:'Ind AS 115',title:'Revenue from Contracts with Customers',color:'#1d4ed8',bg:'#eff6ff',complexity:'High',
+  keywords:['revenue','contract','customer','sales','license','saas','subscription','upfront','milestone','performance obligation','goods','services','consulting','software','retainer','advance','deferred revenue','variable consideration','price','invoice','billing','telecom','bundle','warranty'],
+  keyParas:['Para 9-16','Para 22-30','Para 31-38','Para 47-72','Para 73-86','Para 106-129'],
+  industryNotes:{'IT & Software':'SaaS contracts typically involve multiple performance obligations (license, implementation, support). Assess whether the license grants a right to access (over time) or a right to use (point in time) the IP.','Telecom':'Bundled handset + service plans require careful SSP allocation. Subsidised handsets shift revenue forward from service fees.','Real Estate & Construction':'Revenue is typically recognised over time using input method (cost-to-cost) for long-term contracts. Assess variable consideration (incentive/penalty clauses) carefully.','Manufacturing':'For bill-and-hold arrangements, assess whether control has transferred despite non-delivery. Consider consignment arrangements carefully.'},
+  entityNotes:{'Bank / NBFC':'Fee income from loan origination must be assessed under Ind AS 115 vs. Ind AS 109 (EIR method). Processing fees integral to the loan are part of EIR, not Ind AS 115.','Listed / Public Company':'SEBI LODR requires quarterly disclosure of revenue disaggregation. Ensure consistency between investor presentations and Ind AS 115 disclosures.'},
+  steps:[
+    {n:'Step 1',title:'Identify the Contract(s)',para:'Para 9-16',detail:'A contract exists when: (a) parties have approved it, (b) each party\'s rights can be identified, (c) payment terms identified, (d) commercial substance, (e) probable collection of consideration.'},
+    {n:'Step 2',title:'Identify Performance Obligations',para:'Para 22-30',detail:'A good/service is distinct if: (a) customer can benefit from it alone or with readily available resources, AND (b) promise is separately identifiable from other promises in the contract.'},
+    {n:'Step 3',title:'Determine Transaction Price',para:'Para 47-72',detail:'Consider: fixed amounts, variable consideration (with constraint), significant financing component (if > 12 months), non-cash consideration, consideration payable to customer.'},
+    {n:'Step 4',title:'Allocate Transaction Price',para:'Para 73-86',detail:'Allocate on relative standalone selling price (SSP) basis. Use observable prices or estimates (adjusted market assessment, expected cost plus margin, residual approach).'},
+    {n:'Step 5',title:'Recognize Revenue',para:'Para 31-38',detail:'Over time if: (a) customer simultaneously receives and consumes benefits, (b) entity creates/enhances customer-controlled asset, (c) no alternative use + right to payment. Otherwise, point in time.'},
+  ],
+  disclosures:[
+    {head:'Disaggregation of Revenue (Para 114-115)',body:'By type of goods/services, geography, market/customer type, timing (point in time vs. over time), contract type.'},
+    {head:'Contract Balances (Para 116)',body:'Opening/closing balances of contract assets, contract liabilities, trade receivables with significant changes explained.'},
+    {head:'Performance Obligations (Para 119-120)',body:'Description, significant payment terms, nature of goods/services, obligations for returns/refunds.'},
+    {head:'Significant Judgements (Para 123-126)',body:'Timing of satisfaction, method for over-time recognition, transaction price estimation.'},
+  ],
+  auditRisks:[
+    {risk:'Completeness of performance obligations',level:'High',proc:'Review contracts for all deliverables; assess distinct criteria; inspect amendments.'},
+    {risk:'SSP estimation accuracy',level:'Medium',proc:'Validate SSP methodology; compare to observable prices; test allocation calculations.'},
+    {risk:'Variable consideration constraint',level:'High',proc:'Review probability assessment; assess historical experience; check subsequent events.'},
+    {risk:'Revenue cut-off',level:'High',proc:'Year-end cut-off testing; agree to delivery/acceptance evidence; test deferred and accrued revenue.'},
+  ],
+  followUps:['How to account for contract modifications?','What if there is a significant financing component?','How to determine SSP when no observable price exists?','When should variable consideration be constrained?'],
+},
+'116':{id:'Ind AS 116',title:'Leases',color:'#7c3aed',bg:'#f5f3ff',complexity:'High',
+  keywords:['lease','lessee','lessor','rent','rental','right of use','rou','finance lease','operating lease','ibl','sublease','sale and leaseback','short term','low value'],
+  keyParas:['Para 9','Para 19-21','Para 22-28','Para 26-27','Para 36-46','Para 47-50'],
+  industryNotes:{'Real Estate & Construction':'Property leases often have variable payments linked to revenue/index. Carefully assess renewal options — economic incentive test.','Retail & Consumer':'Store leases typically have high renewal certainty. Variable rent (turnover-based) excluded from lease liability if not in-substance fixed.','Aviation':'Aircraft leases are major balance sheet items. Maintenance reserves and return conditions may create additional provisions.'},
+  entityNotes:{'Listed / Public Company':'Ind AS 116 significantly impacts leverage ratios and EBITDA. Ensure analyst communication covers lease-adjusted metrics.'},
+  steps:[
+    {n:'Step 1',title:'Identify a Lease',para:'Para 9',detail:'Right to control use of an identified asset for a period in exchange for consideration. Control = right to obtain substantially all economic benefits + right to direct use.'},
+    {n:'Step 2',title:'Determine Lease Term',para:'Para 19-21',detail:'Non-cancellable period + optional renewal periods (if reasonably certain) + optional termination periods (if reasonably certain NOT to exercise).'},
+    {n:'Step 3',title:'Measure Lease Liability',para:'Para 26',detail:'PV of future lease payments at implicit rate (or IBR). Includes: fixed payments, variable payments based on index/rate, residual value guarantees, purchase options, termination penalties.'},
+    {n:'Step 4',title:'Measure ROU Asset',para:'Para 24',detail:'Lease liability + initial direct costs + prepaid payments + estimated dismantling costs. Subsequently: Cost less accumulated depreciation less impairment.'},
+    {n:'Step 5',title:'Subsequent Measurement',para:'Para 36-46',detail:'Lease liability unwound using effective interest method. P&L: Depreciation on ROU + Interest on lease liability (replaces straight-line rent expense).'},
+  ],
+  disclosures:[
+    {head:'Lessee Disclosures (Para 52-60)',body:'ROU assets by class; lease liabilities maturity analysis; total cash outflow; short-term and low-value lease expense; variable lease payments.'},
+    {head:'Maturity Analysis',body:'Undiscounted payments: <1 year, 1-5 years, >5 years, with PV reconciliation.'},
+  ],
+  auditRisks:[
+    {risk:'Completeness of lease population',level:'High',proc:'Review all contracts for embedded leases; inspect real estate register; agree to CARO 2020.'},
+    {risk:'IBR determination',level:'High',proc:'Assess methodology; verify against market rates; involve specialists if material.'},
+    {risk:'Lease term assessment',level:'Medium',proc:'Review renewal assessment; inspect post-BS renewals; assess business plans.'},
+  ],
+  followUps:['How to determine the IBR?','What qualifies as short-term or low-value?','How to handle lease modifications?','How does sale-and-leaseback work?'],
+},
+'109':{id:'Ind AS 109',title:'Financial Instruments',color:'#0f766e',bg:'#f0fdfa',complexity:'High',
+  keywords:['financial instrument','loan','bond','investment','derivative','hedge','hedging','forward','swap','option','ecl','expected credit loss','impairment','fvtpl','fvoci','amortized cost','amortised cost','fair value','receivable','borrowing','debenture','ncd','preference share','equity instrument','debt instrument','credit loss','stage','provision matrix'],
+  keyParas:['Para 4.1','Para 5.1-5.2','Para 5.5','Para 6.1-6.5','B4.1.1-B4.1.26'],
+  industryNotes:{'Banking & Financial Services':'RBI Master Directions on IRACP overlay ECL requirements. Ensure ECL model incorporates RBI-prescribed minimum provisioning norms. Stage 2 criteria may need alignment with SMA classifications.','Insurance':'Investment portfolio classification (amortised cost vs FVOCI) is critical. IRDAI investment regulations may create additional presentation requirements.'},
+  entityNotes:{'Bank / NBFC':'RBI circular on ECL implementation requires specific disclosures beyond Ind AS. Consider regulatory vs. accounting provision and DTA implications of the difference.'},
+  steps:[
+    {n:'Step 1',title:'Classification',para:'Para 4.1',detail:'FA at Amortised Cost (SPPI + HTC), FVOCI (SPPI + HTC&S), FVTPL (all others). Equity: FVTPL default; irrevocable FVOCI election (no recycling). FL: Amortised cost default or FVTPL.'},
+    {n:'Step 2',title:'Initial Measurement',para:'Para 5.1',detail:'FVTPL: Fair value only. Others: Fair value plus/minus transaction costs.'},
+    {n:'Step 3',title:'Subsequent Measurement',para:'Para 5.2',detail:'Amortised cost: EIR method. FVOCI (debt): FV changes in OCI, recycled on derecognition. FVTPL: All changes in P&L. FVOCI (equity): OCI, NOT recycled.'},
+    {n:'Step 4',title:'Impairment — ECL Model',para:'Para 5.5',detail:'Stage 1: 12-month ECL. Stage 2: Lifetime ECL (SICR). Stage 3: Lifetime ECL (credit-impaired). Trade receivables: simplified approach — always lifetime ECL.'},
+    {n:'Step 5',title:'Hedge Accounting',para:'Para 6',detail:'Fair value hedge, Cash flow hedge, Net investment hedge. Must be designated, documented, and highly effective.'},
+  ],
+  disclosures:[
+    {head:'Carrying Amounts by Category',body:'Amortised cost, FVOCI, FVTPL reconciled to balance sheet lines.'},
+    {head:'ECL Disclosures (Para 35H-35N)',body:'Loss allowance roll-forward, gross carrying by credit quality, inputs/assumptions, staging, write-offs.'},
+    {head:'Risk Disclosures (Para 31-42)',body:'Credit, liquidity, and market risk (interest rate, currency, price). Quantitative and qualitative.'},
+  ],
+  auditRisks:[
+    {risk:'SPPI test — classification',level:'High',proc:'Review contractual cash flows; assess non-standard features; involve specialists.'},
+    {risk:'ECL model assumptions',level:'High',proc:'Challenge PD, LGD, EAD; test provision matrix; assess staging criteria and macro overlays.'},
+    {risk:'Fair value (Level 3)',level:'High',proc:'Engage specialists; challenge inputs; compare to market data; test sensitivity.'},
+  ],
+  followUps:['How to apply the SPPI test?','How to build a provision matrix?','What triggers Stage 2?','How does hedge accounting work?'],
+},
+'103':{id:'Ind AS 103',title:'Business Combinations',color:'#be185d',bg:'#fdf2f8',complexity:'High',
+  keywords:['acquisition','business combination','merger','amalgamation','goodwill','ppa','purchase price allocation','acquiree','acquirer','contingent consideration','bargain purchase','step acquisition','control','non-controlling interest','nci'],
+  keyParas:['Para 4-18','Para 19-27','Para 32-40','Para 37','Para 59','B63-B64'],
+  industryNotes:{},entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'Identify the Acquirer',para:'Para 6',detail:'Entity that obtains control (power + variable returns + ability to use power).'},
+    {n:'Step 2',title:'Determine Acquisition Date',para:'Para 8-9',detail:'Date control is obtained. Usually the closing date.'},
+    {n:'Step 3',title:'Measure Consideration',para:'Para 37',detail:'FV of: cash paid, equity issued, liabilities incurred, contingent consideration at FV. Excludes acquisition costs (expensed).'},
+    {n:'Step 4',title:'Recognise Net Assets at FV',para:'Para 18',detail:'PPA: All identifiable assets and liabilities at FV. Separately recognise intangibles (customer relationships, brand, technology) even if not on acquiree\'s books.'},
+    {n:'Step 5',title:'Measure Goodwill',para:'Para 32',detail:'Goodwill = Consideration + NCI (at FV or proportionate share) + Previously held equity at FV - Net identifiable assets at FV. If negative = bargain purchase gain in P&L.'},
+  ],
+  disclosures:[
+    {head:'Combination Disclosures (Para 59)',body:'Acquiree name, acquisition date, % acquired, reasons, FV of consideration, contingent arrangements, recognised assets/liabilities, goodwill basis.'},
+    {head:'PPA Disclosures',body:'FV of major asset/liability classes; intangibles recognised separately from goodwill; factors comprising goodwill.'},
+  ],
+  auditRisks:[
+    {risk:'PPA — intangible identification and valuation',level:'High',proc:'Review PPA report; challenge valuation methodology and assumptions; involve specialists.'},
+    {risk:'Contingent consideration FV',level:'High',proc:'Review probability scenarios; verify discount rate; assess earn-out conditions.'},
+    {risk:'Acquisition date determination',level:'Medium',proc:'Review SPA, conditions precedent, regulatory approvals.'},
+  ],
+  followUps:['What intangibles must be separately recognised?','How is contingent consideration treated post-acquisition?','NCI at FV vs proportionate share — when to use which?'],
+},
+'16':{id:'Ind AS 16',title:'Property, Plant and Equipment',color:'#b45309',bg:'#fffbeb',complexity:'Medium',
+  keywords:['ppe','property','plant','equipment','machinery','building','land','depreciation','capex','capital expenditure','componentization','revaluation','residual value','useful life','borrowing cost','dismantling','decommissioning','subsequent expenditure'],
+  keyParas:['Para 7-14','Para 15-22','Para 29','Para 43-62','Para 67-72'],
+  industryNotes:{'Manufacturing':'Componentization is critical for heavy machinery. Separately identify engine, body, control systems with different useful lives.','Oil & Gas':'Decommissioning/ARO provisions are major — capitalize PV of future dismantling costs as part of PPE cost.'},
+  entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'Recognition',para:'Para 7',detail:'Probable future economic benefits + cost reliably measurable. Subsequent costs capitalised only if they increase future benefits.'},
+    {n:'Step 2',title:'Initial Measurement',para:'Para 15-22',detail:'Cost = purchase price + duties + directly attributable costs + dismantling costs (PV). Plus borrowing costs per Ind AS 23.'},
+    {n:'Step 3',title:'Componentization',para:'Para 43-47',detail:'Significant parts with different useful lives depreciated separately. Mandatory under Ind AS.'},
+    {n:'Step 4',title:'Subsequent Measurement',para:'Para 29',detail:'Cost model (cost - depreciation - impairment) or Revaluation model (FV - subsequent depreciation - impairment). Entire class must be revalued.'},
+    {n:'Step 5',title:'Depreciation',para:'Para 43-62',detail:'Depreciable amount = Cost - Residual value. Method: SLM, WDV, or Units of Production. Reference Schedule II of Companies Act 2013.'},
+  ],
+  disclosures:[{head:'Gross Block Reconciliation (Para 73)',body:'Opening + additions + disposals + transfers + revaluations + impairment = closing. By class.'},{head:'Depreciation Methods and Lives',body:'Methods, useful lives/rates, componentization basis, changes in estimates.'}],
+  auditRisks:[{risk:'Capital vs. revenue expenditure',level:'High',proc:'Test large repairs for correct classification; review capitalisation policy.'},{risk:'Componentization',level:'High',proc:'Review policy; challenge useful life assumptions; inspect engineering reports.'},{risk:'Useful life and residual value',level:'Medium',proc:'Compare to Schedule II; review historical disposals; assess obsolescence.'}],
+  followUps:['How does componentization work?','When are borrowing costs capitalised?','Can we deviate from Schedule II useful lives?'],
+},
+'36':{id:'Ind AS 36',title:'Impairment of Assets',color:'#dc2626',bg:'#fef2f2',complexity:'High',
+  keywords:['impairment','cgu','cash generating unit','recoverable amount','value in use','fair value less costs','goodwill impairment','write down','write off','discount rate','wacc','terminal value'],
+  keyParas:['Para 8-17','Para 18-57','Para 58-64','Para 80-99','Para 126-137'],
+  industryNotes:{},entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'Identify Indicators',para:'Para 12',detail:'External: market value decline, adverse changes, interest rates, market cap < net assets. Internal: obsolescence, damage, underperformance, disposal plans.'},
+    {n:'Step 2',title:'Recoverable Amount',para:'Para 18',detail:'Higher of FVLCD and VIU. VIU = PV of expected future cash flows at pre-tax discount rate.'},
+    {n:'Step 3',title:'VIU Calculation',para:'Para 30-57',detail:'Based on recent budgets (max 5 years) + terminal value. Growth rate not exceeding long-term GDP. Discount at pre-tax WACC.'},
+    {n:'Step 4',title:'Recognise Loss',para:'Para 58-64',detail:'If carrying amount > recoverable amount: impairment loss. For CGUs with goodwill: first to goodwill, then pro-rata.'},
+    {n:'Step 5',title:'Annual Goodwill Test',para:'Para 80-99',detail:'Annual test regardless of indicators. Goodwill impairment CANNOT be reversed.'},
+  ],
+  disclosures:[{head:'Impairment Losses (Para 126)',body:'Amount by class; events/circumstances; recoverable amount basis; key assumptions; discount rate; sensitivity.'},{head:'CGU Disclosures (Para 130)',body:'CGU description; goodwill allocated; key assumptions; growth rate; discount rate; sensitivity analysis.'}],
+  auditRisks:[{risk:'Cash flow projection bias',level:'High',proc:'Challenge growth rates, margins vs. historicals and external data.'},{risk:'Discount rate (WACC)',level:'High',proc:'Involve specialists; verify inputs; ensure pre-tax adjustment.'},{risk:'CGU identification',level:'Medium',proc:'Review management\'s CGU grouping; assess interdependencies.'}],
+  followUps:['How to determine pre-tax discount rate?','CGU vs individual asset testing?','What sensitivity disclosures are needed?'],
+},
+'19':{id:'Ind AS 19',title:'Employee Benefits',color:'#0369a1',bg:'#f0f9ff',complexity:'Medium',
+  keywords:['employee','gratuity','leave','pension','provident fund','pf','defined benefit','defined contribution','actuarial','dbo','post employment','termination benefit','vrs','bonus','leave encashment','esop'],
+  keyParas:['Para 10-23','Para 55-58','Para 67','Para 120','Para 135-148'],
+  industryNotes:{},entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'Classify',para:'Para 7',detail:'Short-term (<12 months): salaries, bonus. Post-employment: Gratuity (DB), PF (DC). Other long-term: leave > 12 months. Termination: VRS.'},
+    {n:'Step 2',title:'Defined Contribution',para:'Para 55-58',detail:'Expense = contribution payable. No actuarial risk for employer. PF (govt), ESIC, NPS.'},
+    {n:'Step 3',title:'Defined Benefit — DBO',para:'Para 67',detail:'DBO = PV of expected future payments using projected unit credit method. Assumptions: discount rate (G-Sec yield), salary growth, attrition, mortality.'},
+    {n:'Step 4',title:'P&L vs. OCI',para:'Para 120',detail:'P&L: Current service cost + past service cost + net interest. OCI: Actuarial gains/losses + return on plan assets (excl. interest) + asset ceiling effect. OCI NOT recycled.'},
+    {n:'Step 5',title:'Net Position',para:'Para 63',detail:'Net = DBO - FV of plan assets. If surplus: asset ceiling test. Funded through approved gratuity trust.'},
+  ],
+  disclosures:[{head:'DB Plan (Para 135-148)',body:'DBO/asset reconciliation; P&L and OCI amounts; sensitivity analysis for key assumptions; expected contributions; maturity profile.'},{head:'Key Assumptions',body:'Discount rate, salary growth, attrition, mortality table, expected return.'}],
+  auditRisks:[{risk:'Actuarial assumptions',level:'High',proc:'Verify discount rate vs G-Sec; challenge salary growth vs historicals.'},{risk:'Data accuracy',level:'Medium',proc:'Verify employee data submitted to actuary against HR records.'}],
+  followUps:['How to determine the discount rate?','How is leave encashment treated?','What is the difference between DB and DC?'],
+},
+'12':{id:'Ind AS 12',title:'Income Taxes',color:'#6d28d9',bg:'#faf5ff',complexity:'High',
+  keywords:['deferred tax','dta','dtl','temporary difference','income tax','tax rate','mat','minimum alternate tax','mat credit','current tax','tax provision'],
+  keyParas:['Para 5-11','Para 12-31','Para 46-56','Para 57-68','Para 71-76','Para 81'],
+  industryNotes:{},entityNotes:{'Bank / NBFC':'ECL provision creates a significant deductible temporary difference. DTA recognition requires careful assessment of future taxable profits.'},
+  steps:[
+    {n:'Step 1',title:'Current Tax',para:'Para 12',detail:'Tax payable on taxable income. Tax rate per IT Act. MAT under S.115JB if higher.'},
+    {n:'Step 2',title:'Identify Temporary Differences',para:'Para 15-31',detail:'Taxable temp diff = DTL. Deductible temp diff = DTA (if probable future taxable profit). Common: depreciation timing, provisions, ECL, lease accounting, unrealised gains.'},
+    {n:'Step 3',title:'Measure',para:'Para 46-56',detail:'DTA/DTL = Temporary difference x enacted/substantively enacted tax rate at BS date.'},
+    {n:'Step 4',title:'DTA Recognition',para:'Para 24-31',detail:'DTA recognised only if probable taxable profit available. Review at each BS date. DTL: generally always recognised.'},
+    {n:'Step 5',title:'Offsetting',para:'Para 71-76',detail:'Offset if: legally enforceable right + same taxing authority + same entity.'},
+  ],
+  disclosures:[{head:'Tax Reconciliation (Para 81)',body:'Effective rate reconciliation; unrecognised DTA amounts/expiry; components of tax expense.'},{head:'Deferred Tax (Para 81)',body:'Nature of temporary differences; recognised vs unrecognised DTA; evidence for DTA in loss-making entities.'}],
+  auditRisks:[{risk:'DTA recoverability',level:'High',proc:'Review future profit projections; assess reversal timing of DTLs.'},{risk:'Temporary difference completeness',level:'High',proc:'Reconcile tax base to IT Act; verify Ind AS adjustments have corresponding DTA/DTL.'}],
+  followUps:['How does MAT credit work?','Deferred tax on Ind AS 116 leases?','When should DTA not be recognised?'],
+},
+'21':{id:'Ind AS 21',title:'Foreign Exchange',color:'#0891b2',bg:'#ecfeff',complexity:'Medium',
+  keywords:['foreign exchange','forex','usd','eur','gbp','foreign currency','translation','functional currency','presentation currency','monetary','non-monetary','exchange difference','fctr','overseas subsidiary'],
+  keyParas:['Para 9-14','Para 20','Para 23','Para 28','Para 38-49','Para 52-54'],
+  industryNotes:{'IT & Software':'Export-oriented IT companies with functional currency INR must restate USD receivables at closing rate. Consider forward contract hedging under Ind AS 109.'},
+  entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'Functional Currency',para:'Para 9-14',detail:'Currency of primary economic environment. Primary indicators: currency influencing sales prices and costs.'},
+    {n:'Step 2',title:'Initial Recognition',para:'Para 20',detail:'At spot rate on transaction date (or period average if not significantly different).'},
+    {n:'Step 3',title:'Subsequent Measurement',para:'Para 23',detail:'Monetary items: closing rate, differences to P&L. Non-monetary at cost: transaction date rate. Non-monetary at FV: FV measurement date rate.'},
+    {n:'Step 4',title:'Foreign Operations',para:'Para 38-49',detail:'Assets/liabilities at closing rate. Income/expenses at transaction date rate (or average). Exchange differences to OCI (FCTR). Recycled on disposal.'},
+    {n:'Step 5',title:'Exchange Differences',para:'Para 28',detail:'Monetary items: P&L. Exception: net investment in foreign operation goes to OCI.'},
+  ],
+  disclosures:[{head:'Exchange Differences (Para 52)',body:'Amount in P&L; amount in OCI (FCTR); functional vs presentation currency.'},{head:'Change in Functional Currency (Para 54)',body:'Fact, reason, and date of change.'}],
+  auditRisks:[{risk:'Functional currency determination',level:'Medium',proc:'Review economic environment; assess primary indicators.'},{risk:'FCTR recycling on disposal',level:'High',proc:'Review disposals of foreign operations; verify recycling calculation.'}],
+  followUps:['Functional vs presentation currency?','When is exchange difference in OCI vs P&L?','How does FCTR work?'],
+},
+'37':{id:'Ind AS 37',title:'Provisions, Contingent Liabilities',color:'#65a30d',bg:'#f7fee7',complexity:'Medium',
+  keywords:['provision','contingent liability','contingent asset','warranty','legal claim','restructuring','onerous contract','decommissioning','restoration','environmental','guarantee','probable','possible','remote'],
+  keyParas:['Para 14','Para 24-26','Para 36-52','Para 63-69','Para 84-92'],
+  industryNotes:{'Oil & Gas':'Decommissioning/ARO is a major provision. Environmental restoration obligations require specialist estimates.','Manufacturing':'Product warranty provisions require historical claims analysis and expected cost estimation.'},
+  entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'Recognition Test',para:'Para 14',detail:'Recognise provision when: (a) present obligation (legal or constructive) from past event, (b) probable outflow of resources, (c) reliable estimate possible.'},
+    {n:'Step 2',title:'Best Estimate',para:'Para 36-52',detail:'Amount = best estimate of expenditure required to settle. For large populations: expected value (probability-weighted). For single obligation: most likely outcome. Discount if time value is material.'},
+    {n:'Step 3',title:'Onerous Contracts',para:'Para 66-69',detail:'If unavoidable costs of meeting obligations exceed expected economic benefits, recognise provision for the lower of: cost of fulfilling vs. penalties for not fulfilling.'},
+    {n:'Step 4',title:'Contingent Liabilities',para:'Para 27-30',detail:'Possible obligation or present obligation where outflow is not probable or amount not reliably estimated: DISCLOSE in notes (do not recognise). Remote: no disclosure needed.'},
+    {n:'Step 5',title:'Review and Adjustment',para:'Para 59',detail:'Review at each BS date; adjust for current best estimate; reverse if no longer probable. Unwinding of discount through finance cost.'},
+  ],
+  disclosures:[{head:'Provisions (Para 84)',body:'Carrying amount movement (opening + additions + utilised + reversed + unwinding = closing); nature and expected timing; uncertainties; reimbursement assets.'},{head:'Contingent Liabilities (Para 86)',body:'Nature; estimate of financial effect; uncertainties; possibility of reimbursement.'}],
+  auditRisks:[{risk:'Completeness of provisions',level:'High',proc:'Review board minutes, legal opinions, management representations for unrecognised obligations.'},{risk:'Estimation accuracy',level:'Medium',proc:'Challenge key assumptions; review historical accuracy of provisions; assess expert reports.'}],
+  followUps:['When is a provision vs contingent liability?','How to account for onerous contracts?','Warranty: assurance-type vs service-type?'],
+},
+'102':{id:'Ind AS 102',title:'Share-Based Payments',color:'#d946ef',bg:'#fdf4ff',complexity:'High',
+  keywords:['esop','stock option','share based','share-based','employee stock','vesting','grant date','exercise','modification','repricing','equity settled','cash settled','sar'],
+  keyParas:['Para 10-29','Para 30-33','Para 26-29','Para 44-52'],
+  industryNotes:{'IT & Software':'ESOPs are a major compensation component. Ensure FV estimation uses appropriate volatility and exercise behavior assumptions.'},
+  entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'Identify Grant',para:'Para 10',detail:'Grant date = date entity and counterparty agree to share-based payment arrangement. Must have shared understanding of terms and conditions.'},
+    {n:'Step 2',title:'Classify',para:'Para 10-29',detail:'Equity-settled: FV of equity instruments granted. Cash-settled: FV of liability at each reporting date. Choice: entity vs employee choice affects classification.'},
+    {n:'Step 3',title:'Measure',para:'Para 11-13',detail:'FV at grant date using option pricing model (Black-Scholes or Binomial). Inputs: exercise price, current share price, expected volatility, time to expiry, risk-free rate, expected dividends.'},
+    {n:'Step 4',title:'Vesting Period',para:'Para 14-15',detail:'Expense recognised over vesting period. Service conditions: straight-line over period. Market conditions: reflected in FV at grant date (expense not reversed if not met). Non-market performance: true-up based on probability.'},
+    {n:'Step 5',title:'Modifications',para:'Para 26-29',detail:'Continue recognising original FV. If modification increases FV: incremental FV recognised over remaining vesting period. Repricing: incremental FV = new FV - old FV at modification date.'},
+  ],
+  disclosures:[{head:'ESOP Disclosures',body:'Number and WAEP of options outstanding, exercised, forfeited, expired. FV estimation methodology and inputs. Total expense recognised.'}],
+  auditRisks:[{risk:'FV estimation of options',level:'High',proc:'Review pricing model inputs; challenge volatility and exercise behavior; involve specialists.'},{risk:'Modification accounting',level:'High',proc:'Review repricing terms; verify incremental FV calculation; assess vesting period impact.'}],
+  followUps:['How to value ESOPs using Black-Scholes?','How are modifications accounted for?','What is the tax treatment of ESOPs?'],
+},
+'41':{id:'Ind AS 41',title:'Agriculture',color:'#059669',bg:'#ecfdf5',complexity:'Medium',
+  keywords:['agriculture','biological asset','dairy','cow','herd','plantation','crop','harvest','livestock','poultry','fish','timber','produce','bearer plant','fvlcts'],
+  keyParas:['Para 5','Para 12-13','Para 26-29','Para 34-38','Para 40-57'],
+  industryNotes:{'Agriculture & Food Processing':'Biological assets at FVLCTS; agricultural produce at FVLCTS at harvest then Ind AS 2 subsequently. Government grants under Ind AS 41 (not Ind AS 20) if related to biological assets at FVLCTS.'},
+  entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'Scope',para:'Para 1-4',detail:'Applies to biological assets (living animals/plants), agricultural produce at harvest, and government grants related to biological assets. Bearer plants excluded (Ind AS 16).'},
+    {n:'Step 2',title:'Recognition',para:'Para 10',detail:'Recognise when: (a) entity controls the asset, (b) probable future economic benefits, (c) FV or cost reliably measurable.'},
+    {n:'Step 3',title:'Measurement',para:'Para 12-13',detail:'Biological assets: FVLCTS at each reporting date. Agricultural produce: FVLCTS at point of harvest, then Ind AS 2.'},
+    {n:'Step 4',title:'Gains and Losses',para:'Para 26',detail:'All FV changes recognised in P&L in the period they arise. Day-one gain/loss on initial recognition also to P&L.'},
+    {n:'Step 5',title:'Government Grants',para:'Para 34-38',detail:'Unconditional grants for biological assets at FVLCTS: P&L immediately when receivable. Conditional: P&L when conditions met.'},
+  ],
+  disclosures:[{head:'Biological Assets (Para 40-57)',body:'Description; FV methods; reconciliation of changes; gains/losses in P&L; existence restrictions; commitments.'}],
+  auditRisks:[{risk:'FV determination without active market',level:'High',proc:'Review valuation methodology; assess market comparables; challenge key assumptions.'},{risk:'Physical count and existence',level:'Medium',proc:'Attend physical counts; verify quantities against breeding/mortality records.'}],
+  followUps:['How are bearer plants treated?','Day-one gain/loss on biological assets?','Government grants under Ind AS 41 vs 20?'],
+},
+/* ─────────────────────────────────────────────────────────────────────────── */
+'1':{id:'Ind AS 1',title:'Presentation of Financial Statements',color:'#0c4a6e',bg:'#e0f2fe',complexity:'Low',
+  keywords:['financial statements','balance sheet','profit and loss','cash flow','equity','presentation','going concern','accrual','materiality','offsetting','comparative','notes','schedule iii','other comprehensive income','oci','total comprehensive income','disclosure','accounting policy','ifrs','ind as'],
+  keyParas:['Para 15-24','Para 25-35','Para 38-44','Para 54-80','Para 81-105'],
+  industryNotes:{},entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'Complete Set of Financials',para:'Para 10',detail:'Every company must prepare: (1) Balance Sheet — snapshot of what the company owns and owes on a specific date. (2) Statement of Profit & Loss — shows income and expenses during the year. (3) Statement of Changes in Equity — tracks how shareholders\' equity moved. (4) Statement of Cash Flows (Ind AS 7) — actual cash movements in Operating, Investing, and Financing activities. (5) Notes — detailed explanations and disclosures behind every line item.'},
+    {n:'Step 2',title:'Going Concern',para:'Para 25-26',detail:'Prepare accounts assuming the business will continue for at least 12 more months. If there is serious doubt (e.g., inability to pay debts, loss of major contract), this must be disclosed clearly. If the business is being wound up, switch to liquidation basis, not historical cost.'},
+    {n:'Step 3',title:'Accrual Basis & Materiality',para:'Para 27-31',detail:'Record income and expenses when they HAPPEN, not when cash moves. Example: revenue earned in March 2026 is recorded in March even if cash comes in April. Materiality: only disclose items that could influence a reasonable investor\'s decision. Small items can be aggregated.'},
+    {n:'Step 4',title:'No Offsetting (Netting)',para:'Para 32-35',detail:'Do NOT net off assets against liabilities or income against expenses. Example: ₹500 crore receivable and ₹300 crore payable must both appear separately — you cannot just show ₹200 crore net. Exception: where another Ind AS specifically permits netting (e.g., Ind AS 12 for deferred tax).'},
+    {n:'Step 5',title:'Comparative Information',para:'Para 38-44',detail:'Every number must show BOTH current year and prior year side by side. If a policy changes or an error is corrected (Ind AS 8), prior year comparatives must be restated. In that case, THREE balance sheets are presented: current year, prior year restated, and the opening of the prior year.'},
+  ],
+  disclosures:[
+    {head:'Accounting Policies (Para 117-124)',body:'Disclose all significant accounting policies used: basis of preparation (Ind AS), measurement bases (historical cost, fair value), and specific policies for revenue, depreciation, inventories, financial instruments, etc.'},
+    {head:'Sources of Estimation Uncertainty (Para 125)',body:'Disclose areas where estimates have a significant risk of material adjustment in the next year — e.g., useful life of PPE, ECL assumptions, warranty provisions, actuarial assumptions.'},
+    {head:'Capital Disclosures (Para 134-136)',body:'Objectives, policies, and processes for managing capital; whether capital requirements are complied with.'},
+  ],
+  auditRisks:[
+    {risk:'Going concern assessment',level:'High',proc:'Review cash flow projections, loan covenants, post-balance-sheet events, and management plans.'},
+    {risk:'Completeness and accuracy of disclosures',level:'Medium',proc:'Trace all Ind AS requirements to actual disclosures; verify numerical cross-references.'},
+    {risk:'Correct classification (current vs non-current)',level:'Medium',proc:'Review operating cycle definition; verify loan covenants for reclassification triggers.'},
+  ],
+  followUps:['What goes in Other Comprehensive Income vs P&L?','How to classify assets as current vs non-current?','When must a third balance sheet be presented?'],
+},
+'2':{id:'Ind AS 2',title:'Inventories',color:'#166534',bg:'#dcfce7',complexity:'Low',
+  keywords:['inventory','inventories','stock','raw material','work in progress','wip','finished goods','nrv','net realisable value','cost','fifo','weighted average','lower of cost','valuation','warehouse','goods','trading','merchandise'],
+  keyParas:['Para 9-22','Para 28-33','Para 34-36','Para 36-39'],
+  industryNotes:{'Manufacturing':'Componentize inventory into raw materials, WIP, and finished goods. Overhead absorption into cost of production is mandatory for WIP and finished goods.','Retail & Consumer':'NRV for seasonal/fashion goods must use post-year-end selling prices. Provisions for slow-moving or obsolete stock are common.'},
+  entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'What is Inventory?',para:'Para 6',detail:'Inventory is assets held for sale in the ordinary course of business (finished goods), in the process of production (WIP), or as materials/supplies to be used in production (raw materials). Does NOT include: biological assets (Ind AS 41), financial instruments, WIP from construction contracts (Ind AS 115).'},
+    {n:'Step 2',title:'Measure at LOWER of Cost and NRV',para:'Para 9',detail:'The golden rule: inventory is ALWAYS valued at whichever is lower — its cost or what you can realistically sell it for (NRV). This prevents overvaluing inventory. If the selling price has fallen below cost, you must write down to NRV. The write-down is an expense in P&L.'},
+    {n:'Step 3',title:'What is Cost?',para:'Para 10-18',detail:'Cost = Purchase Price + Import Duties + Non-refundable taxes + Freight inward + Directly attributable costs MINUS trade discounts, rebates, and refundable taxes (like GST credit). For manufactured goods, cost includes raw materials + conversion costs (direct labour + manufacturing overheads).'},
+    {n:'Step 4',title:'Cost Formula — FIFO or Weighted Average',para:'Para 25-27',detail:'FIFO (First-In, First-Out): Assumes oldest inventory is sold first. In rising prices, FIFO gives lower cost of goods sold and higher profit. Weighted Average: Average cost of all units. Both are allowed. LIFO (Last-In, First-Out) is BANNED under Ind AS.'},
+    {n:'Step 5',title:'NRV — Net Realisable Value',para:'Para 28-33',detail:'NRV = Estimated selling price MINUS estimated costs to complete and sell. Example: If a car part cost ₹50,000 but can only be sold for ₹42,000 after finishing touches of ₹5,000, then NRV = ₹37,000 < Cost ₹50,000. Write down to ₹37,000. Review NRV at EVERY balance sheet date.'},
+  ],
+  disclosures:[
+    {head:'Inventory Disclosures (Para 36)',body:'Carrying amount by category (raw materials, WIP, finished goods); amount of write-downs to NRV in P&L; amount of write-down reversals; carrying amount pledged as security.'},
+    {head:'Cost Formula Used',body:'Disclose whether FIFO or Weighted Average is used. Same formula must be used for all inventories of similar nature and use.'},
+  ],
+  auditRisks:[
+    {risk:'NRV below cost — provision adequacy',level:'High',proc:'Compare cost to post-year-end selling prices; review ageing report; inspect slow-moving stock lists.'},
+    {risk:'Overhead absorption rate',level:'Medium',proc:'Test overhead absorption methodology; verify actual vs budgeted production volumes.'},
+    {risk:'Cut-off at year end',level:'High',proc:'Test goods-in-transit; verify last-in/first-out records; agree to despatch notes.'},
+  ],
+  followUps:['When can a write-down to NRV be reversed?','How to treat overhead in cost of production?','FIFO vs Weighted Average — which is better?'],
+},
+'8':{id:'Ind AS 8',title:'Accounting Policies, Changes & Errors',color:'#7c3aed',bg:'#f5f3ff',complexity:'Medium',
+  keywords:['accounting policy','change in policy','change in estimate','prior period error','retrospective','prospective','restatement','correction','useful life','depreciation method','slm','wdv','fundamental error','material prior period'],
+  keyParas:['Para 7-12','Para 14-22','Para 32-40','Para 41-53'],
+  industryNotes:{},entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'What is an Accounting Policy?',para:'Para 5',detail:'Accounting policies are the specific rules and methods a company uses consistently. Examples: how to value inventory (FIFO vs weighted average), how to depreciate PPE (SLM vs WDV), when to recognize revenue. Once chosen, policies must be applied consistently year after year.'},
+    {n:'Step 2',title:'Change in Policy → RETROSPECTIVE',para:'Para 14-22',detail:'A policy can change ONLY if (a) required by a new Ind AS, or (b) the new policy gives more relevant and reliable information. When changed: go back and restate ALL prior year figures as if the new policy ALWAYS existed. Adjust the opening retained earnings for the earliest period shown. Present three balance sheets if the change is at the start of the comparative period.'},
+    {n:'Step 3',title:'Change in Estimate → PROSPECTIVE',para:'Para 32-40',detail:'Estimates are updated when new information arrives. Examples: changing useful life of a machine from 10 years to 15 years, or revising ECL assumptions. Treatment: affect ONLY the current year and future years. Do NOT restate past years — the old estimate was correct given information available at that time.'},
+    {n:'Step 4',title:'Prior Period Errors → RETROSPECTIVE RESTATEMENT',para:'Para 41-53',detail:'Errors are mistakes in past financials — mathematical mistakes, misapplication of policies, fraud, or overlooked facts. Treatment: restate comparative prior year figures as if the error never happened. Adjust opening equity for errors before the earliest period shown. This is NOT a P&L charge in the current year.'},
+    {n:'Step 5',title:'How to Distinguish the Three',para:'Para 5-8',detail:'Key question: "Was the original treatment wrong?" If YES (based on info available then) → ERROR (retrospective restatement). If original was right but standard changed → POLICY CHANGE (retrospective). If original was right but new information arrived → ESTIMATE CHANGE (prospective only). Test: depreciation rate change = policy; useful life change = estimate; missed depreciation entirely = error.'},
+  ],
+  disclosures:[
+    {head:'Policy Change Disclosures (Para 28-29)',body:'Nature; reason why new policy is more relevant; amount of adjustment for current period and each prior period presented; cumulative effect on equity.'},
+    {head:'Estimate Change (Para 39)',body:'Nature and amount of change affecting current period; amount expected to affect future periods if practicable to estimate.'},
+    {head:'Error Correction (Para 49)',body:'Nature; amount of correction per line item; cumulative effect on equity at start of earliest comparative period.'},
+  ],
+  auditRisks:[
+    {risk:'Mis-classification of error as estimate change',level:'High',proc:'Analyse whether information was available at the time; determine nature of misstatement.'},
+    {risk:'Retrospective restatement completeness',level:'Medium',proc:'Verify all comparative periods and opening balances adjusted correctly.'},
+    {risk:'Impracticability claims',level:'Medium',proc:'Challenge management\'s claim that retrospective application is impracticable.'},
+  ],
+  followUps:['How do I know if something is a policy change or estimate change?','What is the "impracticability" exemption?','How are voluntary policy changes disclosed?'],
+},
+'10':{id:'Ind AS 10',title:'Events After the Reporting Period',color:'#0369a1',bg:'#e0f2fe',complexity:'Low',
+  keywords:['events after','subsequent events','post balance sheet','adjusting event','non-adjusting event','dividend declared','going concern post','material event','after reporting period'],
+  keyParas:['Para 3-7','Para 8-13','Para 14-17'],
+  industryNotes:{},entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'What are Events After the Reporting Period?',para:'Para 2',detail:'These are significant events that occur AFTER the balance sheet date (e.g., 31 March 2026) but BEFORE the financial statements are authorised for issue (typically 2-4 months later when the board approves them). The question is: do these events change what we report, or just what we disclose?'},
+    {n:'Step 2',title:'Adjusting Events — Change the Numbers',para:'Para 8-9',detail:'Adjusting events: events that provide EVIDENCE of conditions that ALREADY EXISTED at the balance sheet date. These require changing the financial statements. Examples: (a) A court case that was ongoing at year-end is settled in April for ₹50 crore — adjust the provision. (b) A customer who owed money at year-end files for bankruptcy in May — write down the receivable. (c) Discovery of fraud or errors that existed at year-end.'},
+    {n:'Step 3',title:'Non-Adjusting Events — Disclose Only',para:'Para 10-11',detail:'Non-adjusting events: events that arise from conditions that did NOT exist at the balance sheet date. These do NOT change the numbers, but must be disclosed in notes if material. Examples: (a) Major fire destroying a factory in April. (b) Announcing a major acquisition in May. (c) A natural disaster after year-end. (d) A sharp fall in market prices after year-end.'},
+    {n:'Step 4',title:'Dividends — Never Adjust',para:'Para 12-13',detail:'Dividends declared AFTER the balance sheet date are NEVER recognised as a liability in the current year\'s balance sheet. They are only disclosed in notes. Reason: the company had no obligation to pay at the balance sheet date — the dividend was declared later.'},
+    {n:'Step 5',title:'Going Concern Post-Year-End',para:'Para 14-16',detail:'If information received after year-end indicates the company cannot continue as a going concern, completely change the basis of preparation. This overrides the going concern assumption — the financials must be prepared on a liquidation basis instead.'},
+  ],
+  disclosures:[
+    {head:'Non-Adjusting Events (Para 20)',body:'Nature of the event; estimate of its financial effect (or statement that an estimate cannot be made).'},
+    {head:'Date of Authorisation (Para 17)',body:'Must disclose the date when financial statements were authorised for issue and who gave the authorisation.'},
+  ],
+  auditRisks:[
+    {risk:'Completeness of subsequent events review',level:'High',proc:'Review board minutes, legal letters, management representations, and news up to signing date.'},
+    {risk:'Incorrect classification of event as non-adjusting',level:'High',proc:'Assess whether conditions existed at balance sheet date or arose after.'},
+  ],
+  followUps:['What is the difference between adjusting and non-adjusting events?','How long is the "subsequent events" period?','When should dividends be recognized as a liability?'],
+},
+'23':{id:'Ind AS 23',title:'Borrowing Costs',color:'#92400e',bg:'#fffbeb',complexity:'Low',
+  keywords:['borrowing cost','interest capitalisation','qualifying asset','construction','capitalization','capex','finance cost','ibr','loan','interest','specific borrowing','general borrowing','suspension of capitalisation','commencement'],
+  keyParas:['Para 5','Para 8-9','Para 10-15','Para 16-18','Para 19-24'],
+  industryNotes:{'Real Estate & Construction':'Interest on construction loans is capitalised as part of the building cost during the construction period. Suspension rules apply during prolonged interruptions.','Infrastructure & Utilities':'Power plants and infrastructure assets are classic qualifying assets. Specific borrowings are common; general borrowing pool calculations require careful tracking.'},
+  entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'What is a Qualifying Asset?',para:'Para 5',detail:'A qualifying asset is one that NECESSARILY takes a substantial period of time to get ready for its intended use or sale. Examples: a factory under construction (takes 2 years), a power plant, a real estate development project, a ship being built. NOT qualifying: assets ready for use when purchased (standard inventory), financial assets, assets that routinely take a short time to produce.'},
+    {n:'Step 2',title:'The Core Rule — Capitalise, Not Expense',para:'Para 8',detail:'Borrowing costs directly attributable to acquiring, constructing, or producing a qualifying asset MUST be capitalised as part of the cost of that asset. They are added to the asset\'s cost on the balance sheet, not charged to P&L. All other borrowing costs (on general working capital, etc.) are expensed to P&L in the period incurred.'},
+    {n:'Step 3',title:'Specific vs General Borrowings',para:'Para 10-14',detail:'Specific Borrowing: If a loan is taken specifically to finance a qualifying asset, capitalise actual interest on that loan MINUS any investment income earned by temporarily investing unused loan funds. General Borrowing Pool: If the asset is financed from general borrowings, calculate the capitalization rate = weighted average interest rate on all general borrowings outstanding. Apply this rate to the average expenditure on the asset during the period.'},
+    {n:'Step 4',title:'When to Start, Suspend, and Stop',para:'Para 17-25',detail:'START capitalising when: (a) expenditures on the asset are being incurred, AND (b) borrowing costs are being incurred, AND (c) construction activities have begun. SUSPEND when: active construction is interrupted for an extended period (e.g., regulatory hold, dispute, monsoon season if abnormally prolonged). STOP when: substantially all activities to prepare the asset for use are complete.'},
+    {n:'Step 5',title:'Numerical Illustration',para:'Para 10-14',detail:'Example: Company builds a factory. Specific loan = ₹500 crore at 9%. Expenditure during year = ₹400 crore. Temporarily invested ₹100 crore at 6% for 3 months. Interest to capitalise = ₹400 cr × 9% = ₹36 crore MINUS investment income of ₹1.5 crore (₹100 cr × 6% × 3/12) = ₹34.5 crore. This ₹34.5 crore is added to the factory cost, not charged to P&L.'},
+  ],
+  disclosures:[
+    {head:'Capitalisation Disclosures (Para 26)',body:'Amount of borrowing costs capitalised during the period; capitalization rate used (for general borrowings).'},
+  ],
+  auditRisks:[
+    {risk:'Qualifying asset determination',level:'Medium',proc:'Review asset construction timeline; verify "substantial period" assessment.'},
+    {risk:'Capitalization rate calculation',level:'High',proc:'Verify weighted average interest rate; trace to loan agreements; ensure investment income is deducted.'},
+    {risk:'Commencement and cessation dates',level:'Medium',proc:'Agree to construction contracts, board approvals, and certificate of completion.'},
+  ],
+  followUps:['What if construction is partly funded by equity?','How to handle multiple specific borrowings?','Can borrowing costs be capitalised for inventory?'],
+},
+'33':{id:'Ind AS 33',title:'Earnings Per Share',color:'#0891b2',bg:'#ecfeff',complexity:'Low',
+  keywords:['eps','earnings per share','basic eps','diluted eps','weighted average shares','esop dilution','convertible','potential ordinary shares','profit attributable','minority','preference dividend','share buyback','rights issue'],
+  keyParas:['Para 10-17','Para 19-29','Para 30-63','Para 66-73'],
+  industryNotes:{},entityNotes:{'Listed / Public Company':'EPS must be disclosed on the face of the P&L (Profit & Loss statement), not just in Notes. Basic and Diluted EPS are both mandatory for listed companies.'},
+  steps:[
+    {n:'Step 1',title:'What is EPS and Why Does it Matter?',para:'Para 9',detail:'EPS (Earnings Per Share) tells investors how much profit is attributable to each ordinary share. It is the denominator for the P/E ratio and is one of the most widely followed metrics. If EPS grows, the share is considered more valuable. Ind AS 33 ensures EPS is calculated consistently across all companies.'},
+    {n:'Step 2',title:'Basic EPS Calculation',para:'Para 10-14',detail:'Basic EPS = (Profit attributable to ordinary equity holders) ÷ (Weighted Average Number of ordinary shares outstanding). The numerator: take total profit, subtract any preference dividends (preference shareholders get paid first before ordinary holders). The denominator: weight shares by the fraction of the year they were outstanding. Example: 10 crore shares for 9 months + 12 crore shares for 3 months = WANS of (10×9 + 12×3)/12 = 10.5 crore shares.'},
+    {n:'Step 3',title:'Diluted EPS — As If Everything Converted',para:'Para 30-40',detail:'Diluted EPS assumes ALL dilutive potential ordinary shares are exercised or converted. Dilutive instruments: ESOPs (employee stock options), convertible debentures, convertible preference shares, warrants. For each dilutive instrument: (a) Add the shares that would be issued to the denominator, (b) Add back any savings to the numerator (e.g., interest saved if debt converts). If diluted EPS < basic EPS: the instrument is dilutive (include it). If diluted EPS > basic EPS: the instrument is anti-dilutive (exclude it).'},
+    {n:'Step 4',title:'Special Cases — Bonus Issue, Rights Issue, Stock Split',para:'Para 19-29',detail:'Bonus Shares / Stock Splits: No cash consideration received. Treat as if shares existed from the beginning of the earliest period shown. Restate prior year EPS accordingly. Rights Issue: A blend — treat the bonus element retrospectively, and the cash consideration element prospectively from the date of issue.'},
+    {n:'Step 5',title:'Presentation',para:'Para 66-73',detail:'Present Basic and Diluted EPS on the FACE of the P&L statement (not just in notes) for profit/loss from continuing operations. If there are discontinued operations, show separate EPS for them too. Present EPS even if it is negative (a loss per share).'},
+  ],
+  disclosures:[
+    {head:'EPS Disclosures (Para 70)',body:'Numerator (profit used); denominator (WANS); per share amounts; description of transactions affecting shares after year-end.'},
+    {head:'Diluted EPS (Para 70)',body:'Instruments giving rise to dilution; effect of each instrument; anti-dilutive instruments excluded.'},
+  ],
+  auditRisks:[
+    {risk:'WANS calculation accuracy',level:'Medium',proc:'Trace share issuances, buybacks, and bonus issues to board resolutions; verify weighting.'},
+    {risk:'Dilutive instruments identification',level:'Medium',proc:'Review all convertible instruments, ESOPs outstanding; test diluted share calculation.'},
+    {risk:'Preference dividend deduction',level:'Low',proc:'Verify correct amount of preference dividend deducted from numerator.'},
+  ],
+  followUps:['How do bonus shares affect EPS?','How to calculate diluted EPS with ESOPs?','When is an instrument anti-dilutive?'],
+},
+'38':{id:'Ind AS 38',title:'Intangible Assets',color:'#6d28d9',bg:'#faf5ff',complexity:'Medium',
+  keywords:['intangible','patent','trademark','brand','software','goodwill','research','development','r&d','capitalise','useful life','amortise','amortisation','indefinite life','license','franchise','customer list','technology','know-how'],
+  keyParas:['Para 18-67','Para 54-67','Para 68-71','Para 72-87','Para 97-106'],
+  industryNotes:{'IT & Software':'Software development costs: research-phase costs are expensed. Development costs are capitalised once technological feasibility is established (usually from start of Phase 3 or equivalent milestone). Subsequent amortisation period typically 3-5 years.','Pharmaceuticals & Healthcare':'Drug development: research costs expensed. Development costs from Phase 3 clinical trials can be capitalised if technical feasibility is probable. Ongoing impairment assessment critical if regulatory approval fails.'},
+  entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'What is an Intangible Asset?',para:'Para 8-17',detail:'An intangible asset is an identifiable, non-monetary asset WITHOUT physical substance. For example: patents (legal right to an invention), trademarks (brand name), computer software (code), customer lists, licenses (to operate in a market), franchise agreements, and acquired technology. Key requirement: it must be IDENTIFIABLE — either separable (can be sold/licensed separately) OR arising from a legal/contractual right.'},
+    {n:'Step 2',title:'Recognition — 6 Conditions for Development Costs',para:'Para 57',detail:'Internally generated intangibles are the hard part. RESEARCH costs are ALWAYS expensed (Para 54). DEVELOPMENT costs can be capitalised ONLY if ALL 6 conditions are met: (1) Technical feasibility of completion, (2) Intention to complete and use/sell, (3) Ability to use or sell, (4) How will it generate future economic benefits (probable market exists), (5) Adequate resources to complete development, (6) Ability to measure expenditure reliably. ALL SIX must be satisfied — if even one is missing, expense it.'},
+    {n:'Step 3',title:'Cannot Capitalise — These are Always Expensed',para:'Para 48-64',detail:'You can NEVER capitalise: (a) Internally generated brands, mastheads, customer lists (too subjective), (b) Internally generated goodwill — only acquired goodwill (Ind AS 103) can appear on the balance sheet, (c) Training costs, (d) Advertising and marketing costs, (e) Start-up and pre-opening costs of a new business.'},
+    {n:'Step 4',title:'Measurement After Recognition',para:'Para 72-87',detail:'Cost Model: Carry at cost less accumulated amortisation and impairment losses (most common in India). Revaluation Model: Can revalue to fair value IF an active market exists for the specific intangible. Very rare in practice because active markets for specific intangibles rarely exist.'},
+    {n:'Step 5',title:'Useful Life — Finite or Indefinite',para:'Para 88-106',detail:'Finite useful life: Amortise over useful life using a systematic method (usually straight-line). Review useful life and residual value at every year-end. Indefinite useful life: NO amortisation, but test for impairment every year AND whenever there is an indicator. An indefinite-life asset must be reviewed at every year-end to see if it still qualifies as indefinite (e.g., a brand that was forever may now have a finite life due to competition).'},
+  ],
+  disclosures:[
+    {head:'Intangible Assets Disclosures (Para 118)',body:'Gross carrying amount and accumulated amortisation by class; useful life or amortisation rate; amortisation method; reconciliation of opening and closing carrying amounts.'},
+    {head:'Indefinite-Life Intangibles (Para 122)',body:'Description; carrying amount; reasons supporting assessment; sensitivity to changes in key assumptions.'},
+  ],
+  auditRisks:[
+    {risk:'Capitalisation criteria for development costs',level:'High',proc:'Review project documentation; verify all 6 criteria are met at capitalisation commencement date; challenge technical feasibility assessment.'},
+    {risk:'Useful life determination',level:'High',proc:'Review historical pattern; compare to contractual, legal, and competitive factors; challenge indefinite-life designations.'},
+    {risk:'Impairment of indefinite-life intangibles',level:'High',proc:'Test impairment model; challenge cash flow projections and discount rate.'},
+  ],
+  followUps:['Research vs development — how to draw the line?','Can a brand ever be capitalised?','How to amortise software development costs?'],
+},
+'40':{id:'Ind AS 40',title:'Investment Property',color:'#0369a1',bg:'#e0f2fe',complexity:'Low',
+  keywords:['investment property','rental income','capital appreciation','fair value property','leased property','held for rent','commercial property','office property','hotel','reits','property investment','land held','building held for rent'],
+  keyParas:['Para 5-15','Para 16-19','Para 20','Para 27-55','Para 32-55'],
+  industryNotes:{'Real Estate & Construction':'Investment property is a major balance sheet item. Fair value must be disclosed in notes even though cost model is used for measurement. Transfers between owner-occupied and investment property require careful assessment.','Infrastructure & Utilities':'Certain utility-owned properties leased to third parties may qualify as investment property. Distinguishing from property used in operations requires careful analysis.'},
+  entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'What is Investment Property?',para:'Para 5',detail:'Investment property is land or a building (or part of a building) held to earn RENTAL INCOME or for CAPITAL APPRECIATION (or both), rather than for: (a) use in production/supply of goods/services or administration (that would be PPE — Ind AS 16), or (b) sale in the ordinary course of business (that would be inventory — Ind AS 2). Example: A company owns a commercial building in Mumbai that it rents to tenants — this is investment property. If the company uses the same building as its own office — it is PPE.'},
+    {n:'Step 2',title:'India-Specific Rule — Cost Model ONLY',para:'Para 30',detail:'IMPORTANT CARVE-OUT from IFRS: Under IFRS (IAS 40), companies can choose either the Cost Model OR the Fair Value Model for investment property. India removed the Fair Value Model option. Under Ind AS 40, investment property in India can ONLY be measured using the COST MODEL (cost less accumulated depreciation less impairment). HOWEVER, companies must still DISCLOSE the fair value in the notes.'},
+    {n:'Step 3',title:'Cost Model Measurement',para:'Para 27-29',detail:'After recognition at cost, investment property is carried at: cost MINUS accumulated depreciation MINUS accumulated impairment losses. Depreciation policy (SLM typically) must be consistent. Test for impairment annually (Ind AS 36). Land is not depreciated. Apply component accounting (Ind AS 16 principles) to investment properties.'},
+    {n:'Step 4',title:'Transfers In and Out of Investment Property',para:'Para 57-65',detail:'When a property changes its use, transfer it between categories. Examples: (a) Company stops using its own office and starts renting it → transfer from PPE to Investment Property. Carry at cost, no remeasurement. (b) Company starts using its own investment property → transfer from Investment Property to PPE. Carry at cost. No gain/loss on transfer because cost model is used.'},
+    {n:'Step 5',title:'Disposal',para:'Para 66-73',detail:'On disposal (sale or when permanently retired), remove the investment property from the balance sheet. Calculate gain/loss = Sale Proceeds MINUS Carrying Amount (after depreciation). Gain/loss goes to P&L. Proceeds from disposing of investment property are disclosed separately in cash flow statements.'},
+  ],
+  disclosures:[
+    {head:'Investment Property Disclosures (Para 75)',body:'Criteria to distinguish from PPE; measurement basis; depreciation methods and rates; gross carrying amount and accumulated depreciation; additions, disposals, depreciation during the year; restrictions; contractual obligations.'},
+    {head:'Fair Value Disclosure (Mandatory — Para 79)',body:'Fair value of investment property (even though measurement uses cost model). Method and significant assumptions used. Must be based on valuation from an independent, professionally qualified valuer.'},
+  ],
+  auditRisks:[
+    {risk:'Classification — investment property vs PPE vs inventory',level:'High',proc:'Review actual use of property; lease agreements; management intentions; mixed-use property assessment.'},
+    {risk:'Fair value disclosure adequacy',level:'Medium',proc:'Evaluate independence and qualifications of valuer; challenge assumptions in valuation report.'},
+    {risk:'Transfer event identification',level:'Medium',proc:'Inquire about changes in use; review property management records.'},
+  ],
+  followUps:['How to treat mixed-use properties (part PPE, part investment)?','When does a hotel qualify as investment property vs PPE?','What happens if fair value cannot be reliably determined?'],
+},
+'113':{id:'Ind AS 113',title:'Fair Value Measurement',color:'#1d4ed8',bg:'#eff6ff',complexity:'Medium',
+  keywords:['fair value','level 1','level 2','level 3','valuation','market approach','income approach','cost approach','exit price','market participants','observable inputs','unobservable inputs','fv hierarchy','dcf','mark to market','quoted price','active market'],
+  keyParas:['Para 9','Para 15-20','Para 24-47','Para 61-90','Para 91-99'],
+  industryNotes:{'Banking & Financial Services':'Level 3 fair values (unobservable inputs) are highest risk. ECL models, unlisted equity investments, and complex structured products require specialist valuation. Disclose sensitivity analysis for Level 3.','Manufacturing':'Investment in unlisted subsidiaries or strategic equity holdings often requires DCF-based Level 3 valuation. Key assumptions: revenue growth, EBITDA margin, discount rate (WACC).'},
+  entityNotes:{},
+  steps:[
+    {n:'Step 1',title:'Fair Value is an EXIT Price',para:'Para 9',detail:'Fair Value = the price you would RECEIVE to sell an asset OR PAY to transfer a liability in an orderly transaction between market participants at the measurement date. Three critical points: (1) EXIT price — what you get when selling, not what you paid when buying, (2) Orderly transaction — normal market conditions, not a forced sale or distress sale, (3) Market participants — knowledgeable, willing, independent buyers/sellers.'},
+    {n:'Step 2',title:'The 3-Level Hierarchy — Best to Worst',para:'Para 72-90',detail:'Level 1 (Best — Most Reliable): Quoted prices in ACTIVE markets for IDENTICAL assets. Example: Price of Reliance Industries shares on NSE at 3:30 PM. No adjustments allowed. Level 2 (Middle): Observable inputs OTHER than Level 1. Examples: interest rate curves, yield spreads, foreign exchange rates, prices of similar (not identical) assets. Level 3 (Worst — Most Judgemental): Unobservable inputs based on the entity\'s own assumptions. Examples: DCF projections for an unlisted company, assumptions about future cash flows. Always use the HIGHEST level possible.'},
+    {n:'Step 3',title:'Valuation Techniques',para:'Para 61-66',detail:'Market Approach: Uses prices from transactions in identical or comparable assets/liabilities. Best for listed shares, real estate with active market comparables. Income Approach: Converts future amounts to a single present value. DCF (Discounted Cash Flow) is most common — project future free cash flows, discount at WACC. Used for business valuations, unlisted equity. Cost Approach: Reflects the amount to replace the service capacity of an asset. Used for specialised assets without observable market data.'},
+    {n:'Step 4',title:'Principal Market',para:'Para 15-21',detail:'Fair value is measured from the perspective of the PRINCIPAL market (highest volume and activity for the asset). If no principal market exists, use the most advantageous market. The entity must have access to the market. Example: A company holds shares listed on both NSE and BSE — use the market where the company would normally transact (usually NSE if that has higher liquidity for that stock).'},
+    {n:'Step 5',title:'Practical Application Across Standards',para:'Para 4-8',detail:'Ind AS 113 provides the HOW to measure fair value; the WHEN is specified in each individual standard. It applies across: Ind AS 109 (financial instruments at FVTPL and FVOCI), Ind AS 103 (PPA — fair value net assets at acquisition), Ind AS 40 (fair value disclosure for investment property), Ind AS 41 (biological assets at FVLCTS), Ind AS 116 (fair value of lease assets), and many more.'},
+  ],
+  disclosures:[
+    {head:'Fair Value Hierarchy (Para 91-99)',body:'For each class of assets/liabilities: level in hierarchy; amounts transferred between levels; reconciliation of Level 3 balances (opening, gains/losses in P&L/OCI, purchases, sales, transfers).'},
+    {head:'Valuation Techniques & Inputs (Para 93)',body:'Description of valuation technique and inputs used. For Level 3: quantitative information about significant unobservable inputs and sensitivity analysis.'},
+  ],
+  auditRisks:[
+    {risk:'Level 3 valuation assumptions',level:'High',proc:'Involve valuation specialists; challenge WACC, growth rates, and terminal value assumptions; test sensitivity.'},
+    {risk:'Level classification — correct hierarchy',level:'High',proc:'Verify observability of inputs; ensure Level 2 inputs are truly market-observable.'},
+    {risk:'Fair value disclosure completeness',level:'Medium',proc:'Agree disclosures to underlying valuation models; verify Level 3 roll-forward.'},
+  ],
+  followUps:['How to value an unlisted equity investment at fair value?','What is the difference between Level 2 and Level 3?','How does highest and best use apply to non-financial assets?'],
+},
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CASE STUDIES DATABASE
+   ═══════════════════════════════════════════════════════════════════════════ */
+const CASES=[
+{id:'cs1',title:'The Cross-Border Acquisition',short:'Acquisition of foreign subsidiary with contingent consideration, tax losses, and forex translation.',
+  stds:['Ind AS 103','Ind AS 21','Ind AS 12','Ind AS 109'],
+  scenario:`On April 1, 2024, Bharat Dynamics Ltd (INR functional currency) acquired 100% of Zenith Corp (USD functional currency) for USD 5 million in cash.\n\nContingent Consideration: Additional USD 1 million payable on March 31, 2026 if EBITDA target met. FV at acquisition: USD 600,000.\nNet Assets: FV of identifiable net assets = USD 4.5 million.\nTax Losses: Unrecognised tax losses with tax effect of USD 400,000 (tax rate 25%).\nExchange Rates: Apr 1, 2024: 1 USD = \u20B980 | Mar 31, 2025: 1 USD = \u20B983\nYear-End: Contingent consideration FV increases to USD 750,000.`,
+  analysis:[
+    {heading:'Goodwill Calculation (Acquisition Date)',entries:[
+      {label:'Purchase Consideration (Cash)',val:'USD 5,000,000',inr:'\u20B940,00,00,000'},
+      {label:'+ FV of Contingent Consideration (Ind AS 103/109)',val:'USD 600,000',inr:'\u20B94,80,00,000'},
+      {label:'= Total Consideration',val:'USD 5,600,000',inr:'\u20B944,80,00,000'},
+      {label:'FV of Identifiable Net Assets',val:'USD 4,500,000',inr:'\u20B936,00,00,000'},
+      {label:'+ DTA on Tax Losses (Ind AS 12)',val:'USD 400,000',inr:'\u20B93,20,00,000'},
+      {label:'= Adjusted Net Assets',val:'USD 4,900,000',inr:'\u20B939,20,00,000'},
+      {label:'GOODWILL (Consideration - Net Assets)',val:'USD 700,000',inr:'\u20B95,60,00,000',highlight:true},
+    ]},
+    {heading:'Year-End Treatment (March 31, 2025)',entries:[
+      {label:'Opening Contingent Liability: USD 600,000 \u00D7 \u20B980',val:'',inr:'\u20B94,80,00,000'},
+      {label:'Closing Contingent Liability: USD 750,000 \u00D7 \u20B983',val:'',inr:'\u20B96,22,50,000'},
+      {label:'Loss \u2014 FV Change: (750K-600K) \u00D7 \u20B983 \u2192 P&L',val:'USD 150,000',inr:'\u20B91,24,50,000',highlight:true},
+      {label:'Loss \u2014 Forex (Ind AS 21): 600K \u00D7 (\u20B983-\u20B980) \u2192 P&L',val:'USD 600K \u00D7 \u20B93',inr:'\u20B918,00,000',highlight:true},
+      {label:'Total P&L Charge',val:'',inr:'\u20B91,42,50,000',highlight:true},
+    ]},
+  ],
+  journals:[
+    {title:'Acquisition Date (Apr 1, 2024)',rows:[
+      {acc:'Identifiable Net Assets (at FV)',dr:'\u20B936,00,00,000',cr:''},
+      {acc:'Deferred Tax Asset (Tax Losses)',dr:'\u20B93,20,00,000',cr:''},
+      {acc:'Goodwill',dr:'\u20B95,60,00,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Bank',dr:'',cr:'\u20B940,00,00,000'},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Contingent Consideration Liability',dr:'',cr:'\u20B94,80,00,000'},
+    ],narr:'Being acquisition of 100% of Zenith Corp at FV; goodwill recognised per Ind AS 103'},
+    {title:'Year-End Remeasurement (Mar 31, 2025)',rows:[
+      {acc:'Loss on FV Change \u2014 Contingent Consideration (P&L)',dr:'\u20B91,24,50,000',cr:''},
+      {acc:'Exchange Loss on Contingent Consideration (P&L)',dr:'\u20B918,00,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Contingent Consideration Liability',dr:'',cr:'\u20B91,42,50,000'},
+    ],narr:'Being FV remeasurement (Ind AS 109) and forex restatement (Ind AS 21) of contingent consideration; does NOT adjust goodwill post-acquisition'},
+  ],
+},
+{id:'cs2',title:'The Bundled Telecom Contract',short:'Smartphone + data plan + financing component + warranty split.',
+  stds:['Ind AS 115','Ind AS 109','Ind AS 37'],
+  scenario:`NextGen Telecom sells a smartphone bundled with a 2-year voice/data plan for \u20B960,000.\n\nStandalone Prices: Phone \u20B945,000; 2-year plan \u20B924,000 (\u20B91,000/month).\nFinancing: Payment deferred to end of 2 years. IBR = 10% p.a.\nWarranty: 1-year manufacturer defect warranty (assurance-type) + 1-year "screen replacement guarantee" (service-type). Screen guarantee SSP = \u20B93,000.`,
+  analysis:[
+    {heading:'Transaction Price (Significant Financing \u2014 Ind AS 115/109)',entries:[
+      {label:'Payment at end of Year 2',val:'\u20B960,000',inr:''},
+      {label:'Discount: PV = \u20B960,000 \u00F7 (1.10)\u00B2',val:'',inr:'\u20B949,587'},
+      {label:'Transaction Price (PV)',val:'',inr:'\u20B949,587',highlight:true},
+      {label:'Financing Component (Interest Income over 2 yrs)',val:'',inr:'\u20B910,413'},
+    ]},
+    {heading:'SSP Allocation',entries:[
+      {label:'Phone SSP',val:'\u20B945,000',inr:'62.5%'},
+      {label:'Telecom Plan SSP',val:'\u20B924,000',inr:'33.3%'},
+      {label:'Screen Guarantee SSP',val:'\u20B93,000',inr:'4.2%'},
+      {label:'Total SSP',val:'\u20B972,000',inr:'100%'},
+      {label:'Allocated to Phone: (45K/72K) \u00D7 \u20B949,587',val:'',inr:'\u20B930,992',highlight:true},
+      {label:'Allocated to Telecom Plan: (24K/72K) \u00D7 \u20B949,587',val:'',inr:'\u20B916,529',highlight:true},
+      {label:'Allocated to Screen Guarantee: (3K/72K) \u00D7 \u20B949,587',val:'',inr:'\u20B92,066',highlight:true},
+    ]},
+    {heading:'Warranty Treatment',entries:[
+      {label:'Defect Warranty (Assurance-type) \u2192 Ind AS 37 Provision',val:'NOT a PO',inr:'Expense as incurred'},
+      {label:'Screen Guarantee (Service-type) \u2192 Ind AS 115 PO',val:'Separate PO',inr:'\u20B92,066 over 1 year'},
+    ]},
+  ],
+  journals:[
+    {title:'Day 1 \u2014 Delivery of Phone',rows:[
+      {acc:'Contract Receivable (Due in 2 yrs)',dr:'\u20B949,587',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Revenue \u2014 Phone',dr:'',cr:'\u20B930,992'},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Contract Liability \u2014 Telecom Plan',dr:'',cr:'\u20B916,529'},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Contract Liability \u2014 Screen Guarantee',dr:'',cr:'\u20B92,066'},
+    ],narr:'Phone revenue at point in time; plan and warranty deferred'},
+    {title:'Monthly \u2014 Telecom Plan Revenue Recognition',rows:[
+      {acc:'Contract Liability \u2014 Telecom Plan',dr:'\u20B9689',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Revenue \u2014 Telecom Services',dr:'',cr:'\u20B9689'},
+    ],narr:'\u20B916,529 \u00F7 24 months = \u20B9689/month over time'},
+    {title:'Financing \u2014 Interest Income (Year 1)',rows:[
+      {acc:'Contract Receivable',dr:'\u20B94,959',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Interest Income (P&L)',dr:'',cr:'\u20B94,959'},
+    ],narr:'\u20B949,587 \u00D7 10% = \u20B94,959 (unwinding of significant financing component)'},
+  ],
+},
+{id:'cs3',title:'The Impaired Leasehold Refinery',short:'Lease + PPE + decommissioning + impairment allocation across CGU.',
+  stds:['Ind AS 116','Ind AS 16','Ind AS 36','Ind AS 37'],
+  scenario:`PetroChem Ltd leases land for 10 years to build an oil processing unit.\n\nLease: \u20B910 Lakhs/year at year-end. IBR = 8%.\nConstruction: \u20B950 Lakhs (useful life 10 years).\nDecommissioning: Mandatory restoration at Year 10 estimated at \u20B915 Lakhs.\nImpairment: End of Year 2, crude prices crash. CGU recoverable amount (VIU) = \u20B965 Lakhs.`,
+  analysis:[
+    {heading:'Initial Recognition (Year 0)',entries:[
+      {label:'Lease Liability: PV of \u20B910L \u00D7 10 yrs @ 8% (AF = 6.71)',val:'',inr:'\u20B967.10 Lakhs'},
+      {label:'Restoration Liability: PV of \u20B915L @ 8% for 10 yrs',val:'\u20B915L \u00F7 (1.08)\u00B9\u2070',inr:'\u20B96.95 Lakhs'},
+      {label:'PPE Cost: \u20B950L + \u20B96.95L (decommissioning)',val:'',inr:'\u20B956.95 Lakhs',highlight:true},
+      {label:'ROU Asset: = Lease Liability',val:'',inr:'\u20B967.10 Lakhs',highlight:true},
+    ]},
+    {heading:'Carrying Amounts at End of Year 2 (Pre-Impairment)',entries:[
+      {label:'ROU Asset: \u20B967.10 - (\u20B967.10/10 \u00D7 2)',val:'Acc Dep: \u20B913.42L',inr:'\u20B953.68 Lakhs'},
+      {label:'PPE: \u20B956.95 - (\u20B956.95/10 \u00D7 2)',val:'Acc Dep: \u20B911.39L',inr:'\u20B945.56 Lakhs'},
+      {label:'Total CGU Carrying Amount',val:'',inr:'\u20B999.24 Lakhs',highlight:true},
+    ]},
+    {heading:'Impairment Allocation (End of Year 2)',entries:[
+      {label:'Recoverable Amount (VIU)',val:'',inr:'\u20B965.00 Lakhs'},
+      {label:'Total Impairment Loss',val:'\u20B999.24 - \u20B965.00',inr:'\u20B934.24 Lakhs',highlight:true},
+      {label:'Allocated to ROU: (53.68/99.24) \u00D7 34.24',val:'54.1%',inr:'\u20B918.52 Lakhs'},
+      {label:'Allocated to PPE: (45.56/99.24) \u00D7 34.24',val:'45.9%',inr:'\u20B915.72 Lakhs'},
+    ]},
+  ],
+  journals:[
+    {title:'Initial Recognition',rows:[
+      {acc:'ROU Asset',dr:'\u20B967,10,000',cr:''},{acc:'PPE \u2014 Processing Unit',dr:'\u20B956,95,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Lease Liability',dr:'',cr:'\u20B967,10,000'},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Bank (Construction)',dr:'',cr:'\u20B950,00,000'},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Provision for Decommissioning',dr:'',cr:'\u20B96,95,000'},
+    ],narr:'ROU at PV of lease payments; PPE includes decommissioning provision (Ind AS 37)'},
+    {title:'Impairment at Year 2',rows:[
+      {acc:'Impairment Loss (P&L)',dr:'\u20B934,24,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Acc. Impairment \u2014 ROU Asset',dr:'',cr:'\u20B918,52,000'},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Acc. Impairment \u2014 PPE',dr:'',cr:'\u20B915,72,000'},
+    ],narr:'Pro-rata allocation per Ind AS 36; no goodwill in CGU'},
+  ],
+},
+{id:'cs4',title:'The Complex Consolidation',short:'60% acquisition with equity + cash + contingent consideration + NCI at FV.',
+  stds:['Ind AS 110','Ind AS 103','Ind AS 109','Ind AS 32'],
+  scenario:`Alpha Ltd acquires 60% of Beta Ltd on April 1, 2025.\n\nCash: \u20B9100 Crores. Equity: 10 Lakh shares @ FV \u20B9150 = \u20B915 Crores.\nContingent consideration: \u20B920 Crores if Beta achieves \u20B950 Cr profit. FV at acquisition: \u20B912 Crores.\nNCI measured at FV: \u20B990 Crores. Net Assets FV: \u20B9200 Crores.\nYear 1: Beta achieves \u20B955 Cr profit. Alpha pays \u20B920 Crores.`,
+  analysis:[
+    {heading:'Goodwill Calculation',entries:[
+      {label:'Cash Consideration',val:'',inr:'\u20B9100 Crores'},
+      {label:'Equity Consideration (10L \u00D7 \u20B9150)',val:'',inr:'\u20B915 Crores'},
+      {label:'Contingent Consideration (FV)',val:'',inr:'\u20B912 Crores'},
+      {label:'Total Purchase Consideration',val:'',inr:'\u20B9127 Crores'},
+      {label:'+ Fair Value of NCI',val:'',inr:'\u20B990 Crores'},
+      {label:'= Total Value of Business',val:'',inr:'\u20B9217 Crores'},
+      {label:'\u2013 Fair Value of Net Assets',val:'',inr:'(\u20B9200 Crores)'},
+      {label:'GOODWILL',val:'',inr:'\u20B917 Crores',highlight:true},
+    ]},
+    {heading:'Contingent Consideration Settlement (Mar 31, 2026)',entries:[
+      {label:'Opening FV (Ind AS 109 \u2014 FVTPL)',val:'',inr:'\u20B912 Crores'},
+      {label:'Settlement Amount',val:'',inr:'\u20B920 Crores'},
+      {label:'FV Change \u2192 P&L (does NOT adjust goodwill)',val:'',inr:'\u20B98 Crores Loss',highlight:true},
+    ]},
+  ],
+  journals:[
+    {title:'Acquisition (Apr 1, 2025)',rows:[
+      {acc:'Net Assets (at FV)',dr:'\u20B9200 Cr',cr:''},{acc:'Goodwill',dr:'\u20B917 Cr',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Bank',dr:'',cr:'\u20B9100 Cr'},{acc:'\u00A0\u00A0\u00A0\u00A0Share Capital & Premium',dr:'',cr:'\u20B915 Cr'},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Contingent Consideration Liability',dr:'',cr:'\u20B912 Cr'},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Non-Controlling Interest',dr:'',cr:'\u20B990 Cr'},
+    ],narr:'Being acquisition of 60% of Beta Ltd; NCI at fair value method'},
+    {title:'FV Remeasurement (Mar 31, 2026)',rows:[
+      {acc:'FV Loss on Contingent Consideration (P&L)',dr:'\u20B98 Cr',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Contingent Consideration Liability',dr:'',cr:'\u20B98 Cr'},
+    ],narr:'Post-acquisition change: P&L, NOT goodwill (Ind AS 103)'},
+    {title:'Settlement',rows:[
+      {acc:'Contingent Consideration Liability',dr:'\u20B920 Cr',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Bank',dr:'',cr:'\u20B920 Cr'},
+    ],narr:'Being settlement of contingent consideration'},
+  ],
+},
+{id:'cs5',title:'The ESOP Repricing & Tax Maze',short:'Stock option modification, incremental FV, and DTA split between P&L and equity.',
+  stds:['Ind AS 102','Ind AS 12'],
+  scenario:`Delta Ltd grants 10,000 options to CEO on Apr 1, 2024. Vesting: 3 years.\n\nOriginal: Exercise price \u20B9500, grant-date FV = \u20B9120/option.\nRepricing (Apr 1, 2025): Exercise price reduced to \u20B9300. FV of original option dropped to \u20B940. FV of modified option = \u20B970.\nTax: Deduction only on exercise based on intrinsic value. Tax rate 30%. Intrinsic value at Mar 31, 2026 = \u20B9150/option.`,
+  analysis:[
+    {heading:'Share-Based Payment Expense (Ind AS 102)',entries:[
+      {label:'Year 1: 10,000 \u00D7 \u20B9120 \u00D7 (1/3)',val:'Original terms',inr:'\u20B94,00,000'},
+      {label:'Year 2 \u2014 Original Expense: 10,000 \u00D7 \u20B9120 \u00D7 (1/3)',val:'Continue original',inr:'\u20B94,00,000'},
+      {label:'Year 2 \u2014 Incremental FV: Modified \u20B970 - Old \u20B940 = \u20B930',val:'',inr:''},
+      {label:'Year 2 \u2014 Incremental Expense: 10,000 \u00D7 \u20B930 \u00D7 (1/2)',val:'Remaining 2 yrs',inr:'\u20B91,50,000'},
+      {label:'Total Year 2 Expense',val:'',inr:'\u20B95,50,000',highlight:true},
+      {label:'Cumulative through Year 2',val:'',inr:'\u20B99,50,000',highlight:true},
+    ]},
+    {heading:'Deferred Tax Asset (Ind AS 12)',entries:[
+      {label:'Tax Deduction Base: 10,000 \u00D7 \u20B9150 intrinsic',val:'',inr:'\u20B915,00,000'},
+      {label:'Pro-rated: \u20B915,00,000 \u00D7 (2/3 years)',val:'',inr:'\u20B910,00,000'},
+      {label:'Total DTA: \u20B910,00,000 \u00D7 30%',val:'',inr:'\u20B93,00,000',highlight:true},
+      {label:'P&L Portion: \u20B99,50,000 \u00D7 30%',val:'Capped at cum. expense',inr:'\u20B92,85,000'},
+      {label:'Equity Portion: (\u20B910L - \u20B99.5L) \u00D7 30%',val:'Excess to equity',inr:'\u20B915,000'},
+    ]},
+  ],
+  journals:[
+    {title:'Year 1 \u2014 ESOP Expense',rows:[
+      {acc:'Employee Benefits Expense (P&L)',dr:'\u20B94,00,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Share Options Outstanding (Equity)',dr:'',cr:'\u20B94,00,000'},
+    ],narr:'1/3 of original grant-date FV'},
+    {title:'Year 2 \u2014 ESOP Expense (Post Modification)',rows:[
+      {acc:'Employee Benefits Expense (P&L)',dr:'\u20B95,50,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Share Options Outstanding (Equity)',dr:'',cr:'\u20B95,50,000'},
+    ],narr:'Original \u20B94L + incremental \u20B91.5L per Ind AS 102 Para 27'},
+    {title:'Year 2 \u2014 Deferred Tax Asset',rows:[
+      {acc:'Deferred Tax Asset',dr:'\u20B93,00,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Tax Expense (P&L)',dr:'',cr:'\u20B92,85,000'},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Equity \u2014 SOCE (Excess)',dr:'',cr:'\u20B915,000'},
+    ],narr:'DTA split: P&L up to cumulative expense; excess to equity (Ind AS 12)'},
+  ],
+},
+{id:'cs6',title:'The Onerous Construction Contract',short:'Over-time revenue + variable consideration reversal + onerous contract provision.',
+  stds:['Ind AS 115','Ind AS 37'],
+  scenario:`Omega Constructions: Fixed-price bridge contract \u20B9500 Crores. Expected cost \u20B9450 Crores. Bonus \u20B920 Crores for early completion (initially included in TP = \u20B9520 Crores).\n\nYear 1: Costs incurred \u20B9250 Crores. Revised total costs \u20B9550 Crores. Bonus lost (deadline missed). Input method (cost-to-cost).`,
+  analysis:[
+    {heading:'Revised Year-End Position',entries:[
+      {label:'Revised Transaction Price (bonus removed)',val:'',inr:'\u20B9500 Crores'},
+      {label:'Revised Total Costs',val:'',inr:'\u20B9550 Crores'},
+      {label:'POC: \u20B9250 / \u20B9550',val:'',inr:'45.45%',highlight:true},
+    ]},
+    {heading:'P&L Recognition \u2014 Year 1',entries:[
+      {label:'Revenue: 45.45% \u00D7 \u20B9500 Cr',val:'',inr:'\u20B9227.25 Crores'},
+      {label:'Cost: Actual incurred',val:'',inr:'\u20B9250.00 Crores'},
+      {label:'Gross Loss (Revenue \u2013 Cost)',val:'',inr:'(\u20B922.75 Crores)',highlight:true},
+    ]},
+    {heading:'Onerous Contract Provision (Ind AS 37)',entries:[
+      {label:'Total Expected Loss: \u20B9500 \u2013 \u20B9550',val:'',inr:'(\u20B950 Crores)'},
+      {label:'Already recognised via POC',val:'',inr:'(\u20B922.75 Crores)'},
+      {label:'Additional Provision Required',val:'',inr:'\u20B927.25 Crores',highlight:true},
+      {label:'Total Year 1 hit to P&L',val:'',inr:'\u20B950 Crores',highlight:true},
+    ]},
+  ],
+  journals:[
+    {title:'Revenue & Cost \u2014 Year 1',rows:[
+      {acc:'Contract Asset / Trade Receivable',dr:'\u20B9227.25 Cr',cr:''},
+      {acc:'Construction Cost (P&L)',dr:'\u20B9250.00 Cr',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Revenue (P&L)',dr:'',cr:'\u20B9227.25 Cr'},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Bank/Creditors',dr:'',cr:'\u20B9250.00 Cr'},
+    ],narr:'Gross loss of \u20B922.75 Cr flows through above entries'},
+    {title:'Onerous Contract Provision',rows:[
+      {acc:'Provision for Onerous Contract (P&L)',dr:'\u20B927.25 Cr',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Provision Liability',dr:'',cr:'\u20B927.25 Cr'},
+    ],narr:'Remaining expected loss recognised immediately per Ind AS 37; total Year 1 P&L impact = \u20B950 Cr'},
+  ],
+},
+{id:'cs7',title:'The Dairy Farm Dilemma',short:'Biological assets at FVLCTS, day-one loss, government grant under Ind AS 41.',
+  stds:['Ind AS 41','Ind AS 20','Ind AS 16'],
+  scenario:`AgroDairy Ltd buys 100 dairy cows at \u20B91,00,000 each + \u20B95,000 transport each. Selling costs = 2% of FV.\nGovt grant: \u20B920 Lakhs (unconditional, for this breed).\nMilk harvested: FVLCTS = \u20B915 Lakhs.\nYear-end cow price: \u20B91,10,000.`,
+  analysis:[
+    {heading:'Initial Recognition \u2014 Day One (Ind AS 41)',entries:[
+      {label:'Purchase Cost: 100 \u00D7 \u20B91,00,000 + \u20B95,00,000 transport',val:'',inr:'\u20B91,05,00,000'},
+      {label:'Market FV: 100 \u00D7 \u20B91,00,000',val:'',inr:'\u20B91,00,00,000'},
+      {label:'Costs to Sell: 2%',val:'',inr:'(\u20B92,00,000)'},
+      {label:'FVLCTS at inception',val:'',inr:'\u20B998,00,000',highlight:true},
+      {label:'Day-One Loss (Cost paid \u2013 FVLCTS)',val:'',inr:'(\u20B97,00,000)',highlight:true},
+    ]},
+    {heading:'Government Grant',entries:[
+      {label:'\u20B920 Lakhs unconditional grant for biological asset at FVLCTS',val:'Ind AS 41 (not Ind AS 20)',inr:'\u20B920,00,000 to P&L immediately',highlight:true},
+    ]},
+    {heading:'Year-End',entries:[
+      {label:'Milk Harvest: FVLCTS at point of milking \u2192 Inventory (Ind AS 2)',val:'',inr:'\u20B915,00,000 gain in P&L'},
+      {label:'Herd Revaluation: 100 \u00D7 \u20B91,10,000 \u2013 2% CTS',val:'',inr:'\u20B91,07,80,000'},
+      {label:'FV Gain: \u20B91,07,80,000 \u2013 \u20B998,00,000',val:'',inr:'\u20B99,80,000 gain in P&L',highlight:true},
+    ]},
+  ],
+  journals:[
+    {title:'Purchase & Day-One Loss',rows:[
+      {acc:'Biological Assets (Dairy Cows)',dr:'\u20B998,00,000',cr:''},{acc:'Loss on Initial Recognition (P&L)',dr:'\u20B97,00,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Bank',dr:'',cr:'\u20B91,05,00,000'},
+    ],narr:'Biological assets recognised at FVLCTS per Ind AS 41; excess cost to P&L'},
+    {title:'Government Grant',rows:[
+      {acc:'Bank / Grant Receivable',dr:'\u20B920,00,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Government Grant Income (P&L)',dr:'',cr:'\u20B920,00,000'},
+    ],narr:'Unconditional grant for biological asset at FVLCTS: P&L immediately (Ind AS 41, not Ind AS 20)'},
+    {title:'Year-End Revaluation',rows:[
+      {acc:'Biological Assets',dr:'\u20B99,80,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0FV Gain on Biological Assets (P&L)',dr:'',cr:'\u20B99,80,000'},
+    ],narr:'FV increase of herd to \u20B91,07,80,000'},
+  ],
+},
+{id:'cs8',title:'The ECL Migration (Stage 1 \u2192 2 \u2192 3)',short:'Loan ECL staging, interest on gross vs net carrying amount, P&L charges.',
+  stds:['Ind AS 109'],
+  scenario:`Apex Finance: \u20B950 Crore unsecured loan to Beta Corp, 3 years, 10% p.a.\n\nStage 1 (inception): 12-month ECL = \u20B950 Lakhs.\nYear 1 End: SICR \u2192 Stage 2. Lifetime ECL = \u20B98 Crores.\nYear 2 End: Default/bankruptcy \u2192 Stage 3. Lifetime ECL = \u20B935 Crores.`,
+  analysis:[
+    {heading:'Interest Income \u2014 Stage 1/2 vs Stage 3',entries:[
+      {label:'Stage 1 & 2: Interest on GROSS carrying amount',val:'10% \u00D7 \u20B950 Cr',inr:'\u20B95 Crores/year'},
+      {label:'Stage 3: Interest on NET carrying amount',val:'',inr:''},
+      {label:'Gross: \u20B950 Cr + \u20B95 Cr (unpaid Yr 2 interest) = \u20B955 Cr',val:'',inr:''},
+      {label:'Less ECL: \u20B935 Cr. Net = \u20B920 Cr',val:'',inr:''},
+      {label:'Year 3 Interest = 10% \u00D7 \u20B920 Cr',val:'',inr:'\u20B92 Crores',highlight:true},
+    ]},
+    {heading:'Impairment Charges to P&L',entries:[
+      {label:'Inception (Apr 1, 2024): 12-month ECL',val:'Stage 1',inr:'\u20B950 Lakhs'},
+      {label:'Year 1 End: Lifetime ECL \u2013 Previous',val:'Stage 2',inr:'\u20B97.50 Crores (\u20B98 Cr \u2013 \u20B90.5 Cr)',highlight:true},
+      {label:'Year 2 End: Lifetime ECL \u2013 Previous',val:'Stage 3',inr:'\u20B927.00 Crores (\u20B935 Cr \u2013 \u20B98 Cr)',highlight:true},
+    ]},
+  ],
+  journals:[
+    {title:'Inception \u2014 Stage 1 ECL',rows:[
+      {acc:'Impairment Loss (P&L)',dr:'\u20B950,00,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0ECL Allowance',dr:'',cr:'\u20B950,00,000'},
+    ],narr:'12-month ECL on initial recognition'},
+    {title:'Year 1 End \u2014 Stage 2 Migration',rows:[
+      {acc:'Impairment Loss (P&L)',dr:'\u20B97,50,00,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0ECL Allowance',dr:'',cr:'\u20B97,50,00,000'},
+    ],narr:'Increase from \u20B950L to \u20B98 Cr on SICR trigger'},
+    {title:'Year 2 End \u2014 Stage 3 (Credit-Impaired)',rows:[
+      {acc:'Impairment Loss (P&L)',dr:'\u20B927,00,00,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0ECL Allowance',dr:'',cr:'\u20B927,00,00,000'},
+    ],narr:'Increase from \u20B98 Cr to \u20B935 Cr; interest now on NET amount'},
+  ],
+},
+{id:'cs9',title:'Cash Flow Hedge on Machinery Import',short:'Forward contract hedge \u2192 OCI \u2192 basis adjustment to PPE cost.',
+  stds:['Ind AS 109','Ind AS 21','Ind AS 16'],
+  scenario:`TechMach Ltd (INR) imports EUR 1,000,000 machinery on Sep 30, 2025.\n\nHedge: Forward contract at \u20B990/EUR on Apr 1, 2025. Cash flow hedge designated.\nJun 30, 2025: Forward rate = \u20B993/EUR. Spot = \u20B992/EUR.\nSep 30, 2025: Spot = \u20B995/EUR. 100% effective.`,
+  analysis:[
+    {heading:'June 30, 2025 (Reporting Date)',entries:[
+      {label:'Forward Gain: (\u20B993 \u2013 \u20B990) \u00D7 EUR 10,00,000',val:'',inr:'\u20B930 Lakhs'},
+      {label:'Effective cash flow hedge \u2192 OCI (not P&L)',val:'',inr:'\u20B930 Lakhs to OCI',highlight:true},
+    ]},
+    {heading:'September 30, 2025 (Settlement + Basis Adjustment)',entries:[
+      {label:'Total Derivative Gain: (\u20B995 \u2013 \u20B990) \u00D7 EUR 10L',val:'',inr:'\u20B950 Lakhs'},
+      {label:'Machinery at spot: EUR 10L \u00D7 \u20B995',val:'',inr:'\u20B99.50 Crores'},
+      {label:'Basis Adjustment: OCI \u20B950L removed \u2192 reduces PPE',val:'',inr:'(\u20B950 Lakhs)'},
+      {label:'Effective PPE Cost (at hedged rate \u20B990)',val:'',inr:'\u20B99.00 Crores',highlight:true},
+    ]},
+  ],
+  journals:[
+    {title:'Jun 30 \u2014 MTM of Forward',rows:[
+      {acc:'Derivative Financial Asset',dr:'\u20B930,00,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Cash Flow Hedge Reserve (OCI)',dr:'',cr:'\u20B930,00,000'},
+    ],narr:'Effective hedge gain to OCI per Ind AS 109'},
+    {title:'Sep 30 \u2014 Final MTM + Settlement',rows:[
+      {acc:'Derivative Financial Asset',dr:'\u20B920,00,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Cash Flow Hedge Reserve (OCI)',dr:'',cr:'\u20B920,00,000'},
+    ],narr:'OCI updated to total \u20B950L'},
+    {title:'Sep 30 \u2014 Machinery + Basis Adjustment',rows:[
+      {acc:'Machinery (PPE)',dr:'\u20B99,50,00,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Bank',dr:'',cr:'\u20B99,50,00,000'},
+      {acc:'Cash Flow Hedge Reserve (OCI)',dr:'\u20B950,00,000',cr:''},
+      {acc:'\u00A0\u00A0\u00A0\u00A0Machinery (PPE)',dr:'',cr:'\u20B950,00,000'},
+    ],narr:'Basis adjustment: OCI removed and reduces asset cost to \u20B99.00 Cr (hedged rate)'},
+  ],
+},
+];
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+const INDUSTRIES=['General / Not specified','Banking & Financial Services','Insurance','Real Estate & Construction','Manufacturing','IT & Software','Retail & Consumer','Infrastructure & Utilities','Oil & Gas','Pharmaceuticals & Healthcare','Telecom','Agriculture & Food Processing','Automobiles','Shipping & Logistics','Aviation','Hotels & Hospitality','Media & Entertainment','Education','Non-Profit / NGO'];
+const ENTITY_TYPES=['Listed / Public Company','Unlisted Public Company','Private Limited Company','LLP / Partnership','Bank / NBFC','Insurance Company','Government Entity'];
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANALYSIS ENGINE — Multi-Standard Identification
+   ═══════════════════════════════════════════════════════════════════════════ */
+function identifyStandards(text){
+  const lower=text.toLowerCase();
+  let scores={};
+  for(const[k,s]of Object.entries(STDS)){scores[k]=s.keywords.filter(kw=>lower.includes(kw)).length;}
+  const sorted=Object.entries(scores).sort((a,b)=>b[1]-a[1]).filter(([,s])=>s>0);
+  if(!sorted.length)return[];
+  const top=sorted[0][1];
+  // return all standards with score >= 40% of top score, or at least 2 keyword hits
+  return sorted.filter(([,s])=>s>=Math.max(2,top*0.35)).map(([k])=>STDS[k]);
+}
+
+function parseAmounts(text){
+  const amounts=[];
+  const patterns=[
+    {re:/[\u20B9]\s*([\d,]+(?:\.\d+)?)\s*(crore|cr|lakh|lac|l|thousand|k|million|mn|billion)?s?\b/gi,cur:'INR'},
+    {re:/(?:USD|usd|\$)\s*([\d,]+(?:\.\d+)?)\s*(million|mn|thousand|k|billion|bn)?/gi,cur:'USD'},
+    {re:/(?:EUR|eur|\u20AC)\s*([\d,]+(?:\.\d+)?)\s*(million|mn|thousand|k)?/gi,cur:'EUR'},
+  ];
+  patterns.forEach(({re,cur})=>{let m;while((m=re.exec(text))!==null){
+    let val=parseFloat(m[1].replace(/,/g,''));
+    const unit=(m[2]||'').toLowerCase();
+    if(unit.startsWith('cr'))val*=10000000;
+    else if(unit.startsWith('l')||unit==='lac')val*=100000;
+    else if(unit.startsWith('m'))val*=1000000;
+    else if(unit.startsWith('b'))val*=1000000000;
+    else if(unit==='k'||unit.startsWith('th'))val*=1000;
+    amounts.push({val,cur,raw:m[0]});
+  }});
+  const pcts=[];
+  let pm;const pre=/(\d+(?:\.\d+)?)\s*%/g;
+  while((pm=pre.exec(text))!==null)pcts.push(parseFloat(pm[1]));
+  const yrs=[];
+  let ym;const yre=/(\d+)\s*[-\s]?(?:year|yr|month)/gi;
+  while((ym=yre.exec(text))!==null)yrs.push(parseInt(ym[1]));
+  return{amounts,pcts,yrs};
+}
+
+function fmtINR(n){if(n>=10000000)return'\u20B9'+((n/10000000).toFixed(2).replace(/\.?0+$/,''))+' Crores';if(n>=100000)return'\u20B9'+((n/100000).toFixed(2).replace(/\.?0+$/,''))+' Lakhs';return'\u20B9'+n.toLocaleString('en-IN');}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   JOURNAL ENTRY MODELS — Entry structure + derivation formulas (not computed values)
+   Format: acc = Account name | dr/cr = [How to derive the amount]
+   ═══════════════════════════════════════════════════════════════════════════ */
+const JE_MODELS={
+'115':[
+  {scenario:'Receipt of advance / upfront payment (before revenue earned)',rows:[
+    {acc:'Bank / Cash',dr:'[= Total contract consideration received per agreement]',cr:''},
+    {acc:'    Contract Liability (Deferred Revenue)',dr:'',cr:'[= Same as Dr. — full amount deferred until performance obligation(s) satisfied]'},
+  ],narr:'Being advance received from customer before satisfying performance obligation(s) — Para 106 Ind AS 115'},
+  {scenario:'Revenue recognition — Over time (SaaS / subscription / support / long-term services)',rows:[
+    {acc:'Contract Liability (Deferred Revenue)',dr:'[= Allocated transaction price for this PO × (Elapsed period ÷ Total service period)]',cr:''},
+    {acc:'    Revenue from Operations',dr:'',cr:'[= Same — recognised proportionately as entity satisfies PO over time]'},
+  ],narr:'Recognised as performance obligation is satisfied over time — Para 38(a)/(b)/(c) Ind AS 115'},
+  {scenario:'Revenue recognition — Point in time (goods delivery / license access)',rows:[
+    {acc:'Trade Receivable / Contract Asset',dr:'[= Allocated transaction price for this performance obligation]',cr:''},
+    {acc:'    Revenue from Operations',dr:'',cr:'[= Same — recognised on transfer of control to customer]'},
+  ],narr:'Recognised when control transfers to customer — Para 38 Ind AS 115; assess delivery/acceptance terms'},
+  {scenario:'Significant financing component — Interest income unwinding',rows:[
+    {acc:'Contract Asset / Receivable (unwinding)',dr:'[= Net present value at period start × Effective Interest Rate for the period]',cr:''},
+    {acc:'    Interest Income (Finance Income)',dr:'',cr:'[= Same — unwinding of time value of money element in deferred payment]'},
+  ],narr:'Where payment deferred > 12 months — Para 63 Ind AS 115; EIR method applied on contract asset/receivable'},
+  {scenario:'Variable consideration — Reversal on constraint triggered',rows:[
+    {acc:'Revenue from Operations (Reversal)',dr:'[= Previously recognised revenue attributable to the variable component now constrained]',cr:''},
+    {acc:'    Contract Liability / Trade Receivable',dr:'',cr:'[= Same — restores deferred amount / reduces receivable]'},
+  ],narr:'Para 56-57 Ind AS 115 — constrain variable consideration if significant reversal is probable'},
+],
+'116':[
+  {scenario:'Commencement date — Initial recognition',rows:[
+    {acc:'Right-of-Use (ROU) Asset',dr:'[= Lease Liability (PV) + Initial direct costs + Prepaid lease payments + PV of restoration obligation]',cr:''},
+    {acc:'    Lease Liability',dr:'',cr:'[= Present Value of future lease payments discounted at IBR (or implicit rate if determinable)]'},
+  ],narr:'Para 22-25 Ind AS 116 — IBR = rate that discounts lease payments + residual value to FV of underlying asset'},
+  {scenario:'Periodic lease payment — Effective interest method split',rows:[
+    {acc:'Lease Liability (Principal reduction)',dr:'[= Contractual installment LESS interest for the period]',cr:''},
+    {acc:'Finance Cost (Interest)',dr:'[= Opening lease liability balance × IBR × (days/365) or IBR/12 per month]',cr:''},
+    {acc:'    Bank',dr:'',cr:'[= Contractual lease installment as per payment schedule]'},
+  ],narr:'Para 36 Ind AS 116 — effective interest method; interest frontloaded in early periods, reduces over time'},
+  {scenario:'Annual depreciation of ROU Asset',rows:[
+    {acc:'Depreciation Expense',dr:'[= ROU Asset initial cost ÷ Shorter of lease term OR useful life of underlying asset (if ownership transfers)]',cr:''},
+    {acc:'    Accumulated Depreciation — ROU Asset',dr:'',cr:'[= Same — typically straight-line over lease term; review if another method reflects pattern better]'},
+  ],narr:'Para 31 Ind AS 116 — if transfer of ownership or purchase option certain, depreciate over useful life instead'},
+  {scenario:'Lease remeasurement (change in lease term / IBR reassessment)',rows:[
+    {acc:'ROU Asset',dr:'[= Revised PV of remaining payments at new IBR MINUS previous carrying amount of lease liability (if increased)]',cr:''},
+    {acc:'    Lease Liability',dr:'',cr:'[= Revised PV of remaining lease payments at reassessment date using updated IBR]'},
+  ],narr:'Para 45-46 Ind AS 116 — remeasure on significant event (e.g., option exercised, lease modification, index change)'},
+],
+'109':[
+  {scenario:'Initial recognition — Financial asset at amortised cost (loan given)',rows:[
+    {acc:'Financial Asset — Loan Receivable',dr:'[= Fair value at transaction date ± directly attributable transaction costs]',cr:''},
+    {acc:'    Bank',dr:'',cr:'[= Cash disbursed; equals FV at initial recognition for arm\'s length transactions]'},
+  ],narr:'Para 5.1.1 Ind AS 109 — classify at amortised cost if SPPI test passes AND HTC business model applies'},
+  {scenario:'Interest income — Effective Interest Rate (EIR) method',rows:[
+    {acc:'Financial Asset — Accrued Interest / Receivable',dr:'[= Gross carrying amount (Stage 1 or 2) OR Net carrying amount (Stage 3) × EIR for period]',cr:''},
+    {acc:'    Interest Income (P&L)',dr:'',cr:'[= Same — computed on gross in Stage 1/2; on net (after ECL) in Stage 3 credit-impaired assets]'},
+  ],narr:'Para 5.4.1 Ind AS 109 — crucial distinction: Stage 3 uses net/amortised cost (gross minus ECL allowance) as interest base'},
+  {scenario:'ECL provision — Stage 1 (12-month ECL) or Stage 2 (Lifetime ECL on SICR)',rows:[
+    {acc:'Impairment Loss / Credit Loss Expense (P&L)',dr:'[= ECL allowance required at reporting date MINUS existing allowance balance]',cr:''},
+    {acc:'    ECL Loss Allowance (contra to asset)',dr:'',cr:'[= Same — represents expected credit loss over 12-month (Stage 1) or lifetime (Stage 2)],'},
+  ],narr:'Para 5.5.3/5.5.5 Ind AS 109 — provision matrix for trade receivables; PD×LGD×EAD for corporate loans; Stage triggers per Para 5.5.9'},
+  {scenario:'FV change — Equity investment designated FVOCI (irrevocable election)',rows:[
+    {acc:'Investment in Equity Shares (FVOCI)',dr:'[= Closing FV MINUS opening carrying amount (if gain)]',cr:''},
+    {acc:'    Unrealised Gain — OCI (Other Comprehensive Income)',dr:'',cr:'[= Same — NEVER recycled to P&L; on disposal transferred within equity]'},
+  ],narr:'Para 5.7.5 Ind AS 109 — FVOCI equity designation is irrevocable; gains/losses stay in OCI permanently (no recycling)'},
+  {scenario:'Cash flow hedge — Forward contract FV gain (effective portion)',rows:[
+    {acc:'Derivative Financial Asset / Liability',dr:'[= Change in fair value of hedging instrument for the period]',cr:''},
+    {acc:'    Cash Flow Hedge Reserve (OCI)',dr:'',cr:'[= Effective portion only — ineffective portion directly to P&L via separate entry]'},
+  ],narr:'Para 6.5.11 Ind AS 109 — effective portion of CFH to OCI; reclassified to P&L when hedged item affects P&L'},
+],
+'103':[
+  {scenario:'Acquisition date — Recording business combination',rows:[
+    {acc:'Identifiable Assets Acquired (at FV)',dr:'[= Fair value of each asset: PPE, Inventory, Intangibles, Receivables, Cash — per PPA report]',cr:''},
+    {acc:'Goodwill (or Bargain Purchase Gain)',dr:'[= Total Consideration + NCI (at FV or proportionate share) MINUS Net FV of identifiable assets]',cr:''},
+    {acc:'    Liabilities Assumed (at FV)',dr:'',cr:'[= Fair value of each liability: debt, provisions, deferred tax — per PPA report]'},
+    {acc:'    Bank / Equity Issued / Consideration Payable',dr:'',cr:'[= Cash paid + FV of equity issued + FV of contingent consideration at acquisition date]'},
+  ],narr:'Para 18-32 Ind AS 103 — acquisition method mandatory; acquisition-related costs expensed (Para 53); PPA may take up to 1 year (measurement period)'},
+  {scenario:'Contingent consideration remeasurement (post-acquisition)',rows:[
+    {acc:'FV Loss on Contingent Consideration (P&L)',dr:'[= Closing FV of liability MINUS opening FV — where FV has increased (additional probable outflow)]',cr:''},
+    {acc:'    Contingent Consideration Liability',dr:'',cr:'[= Same — classified as financial liability (FVTPL) per Ind AS 109]'},
+  ],narr:'Para 58 Ind AS 103 — post-acquisition FV changes do NOT adjust goodwill; charged to P&L (if cash-settled financial liability)'},
+],
+'16':[
+  {scenario:'Acquisition / capitalisation of PPE',rows:[
+    {acc:'Property, Plant and Equipment (Cost)',dr:'[= Purchase price + import duties + non-refundable taxes + directly attributable costs + PV of decommissioning obligation]',cr:''},
+    {acc:'    Bank / Trade Payable',dr:'',cr:'[= Amount paid / payable to supplier]'},
+    {acc:'    Provision for Decommissioning / ARO',dr:'',cr:'[= PV of estimated future dismantling/restoration costs at applicable discount rate]'},
+  ],narr:'Para 15-16 Ind AS 16 — trade discounts deducted; general borrowing costs per Ind AS 23; component accounting mandatory per Para 43'},
+  {scenario:'Annual depreciation charge',rows:[
+    {acc:'Depreciation Expense',dr:'[= (Cost − Residual Value) ÷ Useful Life; compute per component if componentised]',cr:''},
+    {acc:'    Accumulated Depreciation',dr:'',cr:'[= Same — reduce carrying amount; review residual value and useful life annually per Para 51]'},
+  ],narr:'Para 43-62 Ind AS 16 — SLM or WDV or units of production; Schedule II of Companies Act provides indicative useful lives (not mandatory)'},
+  {scenario:'Revaluation — upward (revaluation model)',rows:[
+    {acc:'PPE (Gross Block — revalued)',dr:'[= New FV as determined by independent valuer]',cr:''},
+    {acc:'    Accumulated Depreciation (eliminated)',dr:'',cr:'[= Existing accumulated depreciation — eliminated on revaluation date]'},
+    {acc:'    Revaluation Reserve (OCI)',dr:'',cr:'[= Net increase: New FV MINUS Previous carrying amount (net of depreciation)]'},
+  ],narr:'Para 39-40 Ind AS 16 — revaluation reserve in OCI; NOT recycled to P&L; transferred to retained earnings on depreciation or disposal'},
+],
+'36':[
+  {scenario:'Recognition of impairment loss — standalone asset',rows:[
+    {acc:'Impairment Loss (P&L)',dr:'[= Carrying amount MINUS Recoverable Amount (higher of FVLCD and VIU)]',cr:''},
+    {acc:'    Accumulated Impairment Loss',dr:'',cr:'[= Same — reduces carrying amount; for revalued assets first reduce revaluation reserve in OCI]'},
+  ],narr:'Para 59-60 Ind AS 36 — Recoverable Amount = higher of FVLCD (net of selling costs) and VIU (PV of future cash flows at pre-tax discount rate)'},
+  {scenario:'CGU impairment — allocated first to goodwill then pro-rata',rows:[
+    {acc:'Impairment Loss — Goodwill (P&L)',dr:'[= Goodwill allocated to CGU first — up to full goodwill balance]',cr:''},
+    {acc:'Impairment Loss — Other Assets (P&L)',dr:'[= Residual impairment after goodwill exhausted, allocated pro-rata to other CGU assets by carrying amount]',cr:''},
+    {acc:'    Goodwill',dr:'',cr:'[= Full or partial write-down; CANNOT be reversed in any future period]'},
+    {acc:'    Accumulated Impairment — PPE / Intangibles',dr:'',cr:'[= Pro-rata portion; not below individual asset\'s own recoverable amount]'},
+  ],narr:'Para 104-108 Ind AS 36 — goodwill impairment CANNOT be reversed (Para 124); other asset impairment may be reversed if conditions change'},
+],
+'19':[
+  {scenario:'Annual P&L charge — Defined Benefit Plan (Gratuity)',rows:[
+    {acc:'Employee Benefits Expense — Current Service Cost (P&L)',dr:'[= Actuarial report value — increase in DBO from one year\'s employee service in current period]',cr:''},
+    {acc:'Finance Cost — Net Interest on DBO (P&L)',dr:'[= Opening Net DBO × Discount rate (Ind AS 19 rate = 10-yr G-Sec yield)]',cr:''},
+    {acc:'    Gratuity Liability (Net DBO)',dr:'',cr:'[= Current Service Cost + Net Interest − Benefits paid during period]'},
+  ],narr:'Para 120(a) Ind AS 19 — P&L portion = Current Service Cost + Net Interest; past service cost also in P&L (immediate recognition)'},
+  {scenario:'Actuarial remeasurement — recognised in OCI',rows:[
+    {acc:'OCI — Remeasurement Loss (actuarial)',dr:'[= Actuarial loss from DBO change (demographic/financial assumption changes) + experience adjustments − return on plan assets above interest]',cr:''},
+    {acc:'    Gratuity Liability (Net DBO)',dr:'',cr:'[= Same — increases liability; gain would reduce liability and credit OCI]'},
+  ],narr:'Para 120(c) Ind AS 19 — OCI remeasurements NEVER recycled to P&L; accumulate in retained earnings via SOCE'},
+  {scenario:'Employer contribution to approved gratuity trust',rows:[
+    {acc:'Gratuity Liability (Net DBO)',dr:'[= Amount contributed to the trust; reduces net liability on balance sheet]',cr:''},
+    {acc:'    Bank',dr:'',cr:'[= Cash paid to LIC/approved gratuity trust; increases plan asset FV]'},
+  ],narr:'Contribution reduces net DBO; plan assets = FV of trust investments; present as net on balance sheet (DBO − Plan Assets)'},
+],
+'12':[
+  {scenario:'Current tax provision for the year',rows:[
+    {acc:'Current Tax Expense (P&L)',dr:'[= Taxable income × Applicable tax rate; or MAT under Sec.115JB if higher than normal tax]',cr:''},
+    {acc:'    Current Tax Payable',dr:'',cr:'[= Same — net of advance tax paid; settled on tax payment dates]'},
+  ],narr:'Para 12 Ind AS 12 — taxable income = accounting profit ± permanent differences ± temporary differences; MAT credit entitlement recognised as DTA'},
+  {scenario:'Deferred Tax Liability — taxable temporary difference',rows:[
+    {acc:'Deferred Tax Expense (P&L)',dr:'[= Increase in taxable temp difference × enacted/substantively enacted tax rate]',cr:''},
+    {acc:'    Deferred Tax Liability',dr:'',cr:'[= Carrying amount of asset > Tax base → DTL; e.g., accelerated tax depreciation vs SLM book depreciation]'},
+  ],narr:'Para 15 Ind AS 12 — DTL generally always recognised (limited exceptions: initial recognition exception, goodwill)'},
+  {scenario:'Deferred Tax Asset — deductible temporary difference',rows:[
+    {acc:'Deferred Tax Asset',dr:'[= Deductible temp difference × enacted tax rate — ONLY IF probable future taxable profit available for offset]',cr:''},
+    {acc:'    Deferred Tax Credit (P&L)',dr:'',cr:'[= Same — reduces tax expense; reassess at every balance sheet date]'},
+  ],narr:'Para 24 Ind AS 12 — DTA for: provisions not yet deductible, ECL allowance, deductible losses carried forward; assess recoverability carefully'},
+  {scenario:'DTA / DTL arising from OCI items (e.g., actuarial loss, revaluation)',rows:[
+    {acc:'Deferred Tax Asset / (Liability)',dr:'[= Temporary difference from OCI item × tax rate]',cr:''},
+    {acc:'    OCI — Deferred Tax on Remeasurement / Revaluation',dr:'',cr:'[= Same — tax effect follows the underlying item to OCI, not P&L]'},
+  ],narr:'Para 61A Ind AS 12 — deferred tax on OCI items goes to OCI (not P&L); e.g., DTA on actuarial loss credited to OCI'},
+],
+'21':[
+  {scenario:'Foreign currency monetary item — year-end restatement',rows:[
+    {acc:'Trade Receivable / Loan / Cash (Foreign Currency)',dr:'[= Closing exchange rate × outstanding foreign currency balance MINUS carrying amount at previous rate]',cr:''},
+    {acc:'    Exchange Gain (P&L)',dr:'',cr:'[= Difference if closing rate stronger (gain for receivables/assets)]'},
+    {acc:'Exchange Loss (P&L)',dr:'[= Difference if closing rate weaker (loss for receivables/assets)]',cr:''},
+    {acc:'    Trade Receivable / Loan (restated)',dr:'',cr:'[= Carrying amount restated downward]'},
+  ],narr:'Para 23(a) Ind AS 21 — monetary items restated at closing rate each reporting date; differences to P&L immediately'},
+  {scenario:'Foreign subsidiary — balance sheet translation (closing rate method)',rows:[
+    {acc:'Assets (translated at closing rate)',dr:'[= Each asset × closing rate at reporting date]',cr:''},
+    {acc:'    Liabilities (translated at closing rate)',dr:'',cr:'[= Each liability × closing rate at reporting date]'},
+    {acc:'P&L items translated at average/transaction rate',dr:'[= Revenue/expense × average rate for period]',cr:''},
+    {acc:'    Foreign Currency Translation Reserve (FCTR — OCI)',dr:'',cr:'[= Balancing figure — all translation differences on consolidation of foreign operations]'},
+  ],narr:'Para 39-40 Ind AS 21 — FCTR in OCI; recycled to P&L on disposal or partial disposal of foreign operation (Para 48)'},
+],
+'37':[
+  {scenario:'Initial recognition of provision',rows:[
+    {acc:'Provision Expense / Loss (P&L)',dr:'[= Best estimate of expenditure to settle: most likely outcome (single obligation) or expected value (large population); discount if > 1 year]',cr:''},
+    {acc:'    Provision Liability',dr:'',cr:'[= Same — recognised when: (a) present obligation from past event, (b) probable outflow, (c) reliable estimate]'},
+  ],narr:'Para 14 Ind AS 37 — do NOT recognise if only possible (disclose as contingent liability) or remote; review estimate annually'},
+  {scenario:'Unwinding of discount on long-term provision',rows:[
+    {acc:'Finance Cost — Unwinding of Discount (P&L)',dr:'[= Opening provision balance × Pre-tax risk-free discount rate]',cr:''},
+    {acc:'    Provision Liability',dr:'',cr:'[= Same — increases provision toward nominal value over time as settlement date approaches]'},
+  ],narr:'Para 60 Ind AS 37 — discount provisions where time value is material; decommissioning, legal claims with long settlement timelines'},
+  {scenario:'Onerous contract — provision for unavoidable loss',rows:[
+    {acc:'Onerous Contract Expense (P&L)',dr:'[= Lower of: (a) cost of fulfilling contract, or (b) penalties/compensation for non-fulfilment MINUS benefits expected to be received]',cr:''},
+    {acc:'    Provision for Onerous Contract',dr:'',cr:'[= Same — recognise in FULL immediately when contract becomes onerous; don\'t wait for loss to crystallise]'},
+  ],narr:'Para 66-68 Ind AS 37 — entire expected loss on onerous contract charged to P&L immediately; before recognising separately, impair any dedicated assets first'},
+],
+'102':[
+  {scenario:'Equity-settled ESOP — vesting period expense recognition',rows:[
+    {acc:'Employee Benefits Expense — ESOP (P&L)',dr:'[= (No. of options × Grant-date FV × Vesting probability) × Elapsed vesting period ÷ Total vesting period]',cr:''},
+    {acc:'    Share Options Outstanding (Equity)',dr:'',cr:'[= Same — credit to equity; FV fixed at grant date and NOT remeasured subsequently for equity-settled awards]'},
+  ],narr:'Para 14-15 Ind AS 102 — service conditions: straight-line over vesting period; non-market performance conditions: trued-up; market conditions: reflected in grant-date FV'},
+  {scenario:'ESOP modification (repricing) — incremental FV',rows:[
+    {acc:'Employee Benefits Expense — Original (P&L)',dr:'[= Original grant-date FV ÷ Original vesting period × Elapsed period (continue recognising as if no modification)]',cr:''},
+    {acc:'Employee Benefits Expense — Incremental (P&L)',dr:'[= (Modified FV at modification date − Original FV at modification date) ÷ Remaining vesting period × Elapsed period]',cr:''},
+    {acc:'    Share Options Outstanding (Equity)',dr:'',cr:'[= Sum of both Dr. lines — total cumulative equity credit builds up over remaining vesting period]'},
+  ],narr:'Para 26-27 Ind AS 102 — modification: always recognise at least original grant-date FV; add incremental FV if modification is beneficial to employee'},
+],
+'41':[
+  {scenario:'Initial recognition of biological asset',rows:[
+    {acc:'Biological Assets (FVLCTS)',dr:'[= Fair Value of biological asset at recognition date MINUS estimated costs to sell (broker fees, transport to market, duties)]',cr:''},
+    {acc:'Day-One Loss (P&L) if acquisition cost > FVLCTS',dr:'[= Amount paid/cost incurred MINUS FVLCTS at recognition — immediately to P&L]',cr:''},
+    {acc:'    Bank / Payable',dr:'',cr:'[= Total acquisition cost paid including transport, insurance, etc.]'},
+  ],narr:'Para 12-13 Ind AS 41 — ALWAYS measure biological assets at FVLCTS regardless of cost; day-one gain/loss to P&L immediately'},
+  {scenario:'Period-end FV remeasurement of biological assets',rows:[
+    {acc:'Biological Assets (FV adjustment)',dr:'[= Closing FVLCTS MINUS opening FVLCTS (if FV increased — physical growth, price changes)]',cr:''},
+    {acc:'    Gain on Change in FV of Biological Assets (P&L)',dr:'',cr:'[= Same — recognised immediately in P&L per Para 26; no OCI treatment for biological assets]'},
+  ],narr:'Para 26 Ind AS 41 — all FV changes in biological assets go directly to P&L; separate physical change (growth) from price change in disclosures'},
+  {scenario:'Agricultural produce — recognition at point of harvest',rows:[
+    {acc:'Inventory — Agricultural Produce (Ind AS 2)',dr:'[= FVLCTS at the point of harvest — this is the cost basis for subsequent Ind AS 2 measurement]',cr:''},
+    {acc:'    Gain on Harvest (P&L)',dr:'',cr:'[= FVLCTS at harvest MINUS previous carrying amount of biological asset attributable to produce harvested]'},
+  ],narr:'Para 13 Ind AS 41 — at point of harvest, produce is derecognised from biological assets and recognised as inventory at FVLCTS; subsequently under Ind AS 2'},
+],
+/* ── Ind AS 1 — Presentation (no JE; policy entries shown as reclassification examples) ── */
+'1':[
+  {scenario:'Reclassification: Current to Non-Current liability (loan covenant breach cured)',rows:[
+    {acc:'Non-Current Borrowings (reclassified back)',dr:'[= Carrying amount of borrowing reclassified to non-current when breach is cured before balance sheet date]',cr:''},
+    {acc:'    Current Borrowings',dr:'',cr:'[= Same — reversal of prior reclassification]'},
+  ],narr:'Para 74 Ind AS 1 — if covenant breach is cured by the reporting date, borrowing may be presented as non-current; disclose the nature and fact of the breach'},
+  {scenario:'Correction of misclassification: Operating expense to Capital expenditure',rows:[
+    {acc:'Property, Plant & Equipment (Capital Expenditure)',dr:'[= Amount previously expensed that should have been capitalised per Ind AS 16 criteria]',cr:''},
+    {acc:'    Repairs & Maintenance Expense (P&L reversal)',dr:'',cr:'[= Same — reverses the incorrect P&L charge]'},
+  ],narr:'Ind AS 1 / Ind AS 8 — correct classification to ensure faithful representation; if material prior period error, restate comparatives per Ind AS 8'},
+],
+/* ── Ind AS 2 — Inventories ── */
+'2':[
+  {scenario:'Purchase of inventory (goods for trading)',rows:[
+    {acc:'Inventory — Purchases',dr:'[= Invoice price MINUS trade discounts PLUS freight inward PLUS non-refundable duties (e.g., customs duty)]',cr:''},
+    {acc:'    Accounts Payable / Bank',dr:'',cr:'[= Total amount payable to supplier including all applicable taxes net of recoverable input tax credit]'},
+  ],narr:'Para 10-11 Ind AS 2 — cost of inventory includes purchase price, import duties, and directly attributable acquisition costs; GST input credit deducted'},
+  {scenario:'Write-down to NRV — Net Realisable Value below cost',rows:[
+    {acc:'Loss on Write-Down of Inventory (P&L)',dr:'[= Carrying amount of inventory MINUS Net Realisable Value (= expected selling price MINUS estimated costs to complete and sell)]',cr:''},
+    {acc:'    Inventory Allowance / Write-Down',dr:'',cr:'[= Same — reduces inventory to NRV; recognised as an expense in the period the decline occurs]'},
+  ],narr:'Para 28-33 Ind AS 2 — inventory measured at lower of cost and NRV; NRV decline is a P&L expense; reversal allowed if NRV subsequently recovers (limited to original write-down)'},
+  {scenario:'Reversal of NRV write-down (selling price recovers)',rows:[
+    {acc:'Inventory Allowance (Reversal)',dr:'[= Amount of prior write-down now reversed — limited to the original write-down amount; cannot create a value above original cost]',cr:''},
+    {acc:'    Reversal of Inventory Write-Down (P&L)',dr:'',cr:'[= Same — recognised as a reduction of the cost of goods sold in P&L in the period of recovery]'},
+  ],narr:'Para 33 Ind AS 2 — when circumstances causing write-down no longer exist, reverse up to original cost; cannot revalue above cost'},
+],
+/* ── Ind AS 8 — Accounting Policies, Changes & Errors ── */
+'8':[
+  {scenario:'Correction of prior period material error (opening retained earnings restated)',rows:[
+    {acc:'Retained Earnings — Opening (Equity)',dr:'[= Cumulative impact of the error on prior periods, net of tax — this adjusts the opening balance of the earliest comparative period shown]',cr:''},
+    {acc:'    Asset / Liability that was misstated',dr:'',cr:'[= Amount required to correct the Balance Sheet item to what it should have been all along]'},
+  ],narr:'Para 41-43 Ind AS 8 — material prior period errors corrected by restating comparatives; adjustment goes to opening equity, NOT to current year P&L; disclose nature, amount, and line items affected'},
+  {scenario:'Change in accounting policy — retrospective opening balance adjustment',rows:[
+    {acc:'Retained Earnings — Opening (Equity)',dr:'[= Cumulative effect of applying new policy to all prior periods, net of deferred tax effect]',cr:''},
+    {acc:'    Relevant Balance Sheet Account (restated)',dr:'',cr:'[= Adjustment to the account affected by the policy change — e.g., inventory, PPE, financial instruments]'},
+  ],narr:'Para 22-23 Ind AS 8 — retrospective policy change adjusts opening equity and restates comparatives; if impracticable to determine period-specific effects, adjust earliest practicable period'},
+],
+/* ── Ind AS 10 — Events After the Reporting Period ── */
+'10':[
+  {scenario:'Adjusting event: Settlement of litigation that existed at year-end',rows:[
+    {acc:'Provision Expense / P&L (Adjusting Entry)',dr:'[= Amount of settlement agreed post year-end that provides evidence of the obligation that existed AT the balance sheet date — adjusts the provision recognised or creates one if none existed]',cr:''},
+    {acc:'    Provision for Legal Claims (Liability)',dr:'',cr:'[= Same — adjusts or creates the provision on the balance sheet for the obligation that was present at year-end]'},
+  ],narr:'Para 8-9 Ind AS 10 — adjusting events provide evidence of conditions existing at reporting date; adjust the financial statements before they are authorised for issue'},
+  {scenario:'Non-adjusting event: Dividend declared AFTER year-end (disclosure only)',rows:[
+    {acc:'NO ENTRY IN CURRENT YEAR — Disclosure in Notes only',dr:'',cr:''},
+    {acc:'(Reference: Dividend will be recorded in the NEXT financial year when declared)',dr:'[The amount that will be paid = Dividend per share × Total shares outstanding at declaration date]',cr:''},
+  ],narr:'Para 12-13 Ind AS 10 — dividends declared after balance sheet date are NOT recognised as a liability; they are disclosed in notes as a non-adjusting event; recorded in the year of declaration'},
+],
+/* ── Ind AS 23 — Borrowing Costs ── */
+'23':[
+  {scenario:'Capitalisation of borrowing costs on a qualifying asset under construction',rows:[
+    {acc:'Capital Work in Progress (CWIP)',dr:'[= Interest on specific borrowing for the asset during the period MINUS investment income earned on temporarily idle loan funds]',cr:''},
+    {acc:'    Finance Cost (P&L) — reversed / not charged',dr:'',cr:'[= Same — borrowing cost is capitalised to CWIP, not expensed; reduces P&L finance cost by this amount]'},
+  ],narr:'Para 8-9 Ind AS 23 — borrowing costs directly attributable to a qualifying asset MUST be capitalised; qualifying asset = one that takes substantial time to get ready (factory, power plant, vessel)'},
+  {scenario:'General borrowing pool — capitalisation rate method',rows:[
+    {acc:'Capital Work in Progress (CWIP)',dr:'[= Average expenditure on qualifying asset during period × Weighted average interest rate on all general borrowings outstanding; limited to total borrowing costs incurred in the period]',cr:''},
+    {acc:'    Interest Payable / Finance Cost (allocation)',dr:'',cr:'[= Same — portion of general borrowing cost allocated to CWIP; remaining general borrowing cost stays in P&L finance cost]'},
+  ],narr:'Para 14 Ind AS 23 — when qualifying asset is financed from general borrowing pool, apply capitalization rate = weighted average interest rate on all outstanding general borrowings (excluding specific borrowings)'},
+  {scenario:'Transfer of CWIP to PPE upon completion',rows:[
+    {acc:'Property, Plant & Equipment (PPE)',dr:'[= Total CWIP accumulated including capitalised borrowing costs, direct construction costs, and attributable overheads]',cr:''},
+    {acc:'    Capital Work in Progress (CWIP)',dr:'',cr:'[= Same — once substantially ready for use, CWIP is reclassified to PPE; depreciation commences from this date]'},
+  ],narr:'Para 22 Ind AS 23 — cease capitalisation when substantially all activities to prepare asset for intended use are complete; capitalisation also ceases during prolonged suspension of active development'},
+],
+/* ── Ind AS 33 — Earnings Per Share ── */
+'33':[
+  {scenario:'Basic EPS calculation — profit attributable to ordinary shareholders',rows:[
+    {acc:'Profit or Loss for the Year (P&L)',dr:'',cr:'[= Net profit as reported in the P&L statement]'},
+    {acc:'Less: Preference Dividends (Numerator Reduction)',dr:'[= Preference dividend for the year: (a) if non-cumulative — only if declared; (b) if cumulative — whether or not declared]',cr:''},
+    {acc:'= Numerator for Basic EPS',dr:'[= Profit attributable to ordinary equity holders after deducting preference dividends]',cr:''},
+    {acc:'Weighted Average Number of Shares (Denominator)',dr:'[= Shares outstanding × Fraction of year they were outstanding; Bonus shares retroactively included from start of earliest period shown]',cr:''},
+  ],narr:'Para 10-14 Ind AS 33 — Basic EPS = Numerator ÷ WANS; no journal entry exists for EPS — it is a disclosure calculation; present on the FACE of the P&L statement'},
+  {scenario:'Diluted EPS — ESOP options (Treasury Stock Method)',rows:[
+    {acc:'Incremental Shares from Options (Denominator Addition)',dr:'[= Number of options outstanding × (Market price − Exercise price) ÷ Market price; only include if exercise price < average market price (dilutive)]',cr:''},
+    {acc:'Numerator for Diluted EPS',dr:'[= Same as Basic EPS numerator — for equity-settled options, no adjustment to numerator as no additional consideration paid]',cr:''},
+  ],narr:'Para 45-48 Ind AS 33 — Treasury Stock Method: incremental shares = total option shares MINUS shares that could be repurchased at market price with proceeds; options are anti-dilutive if exercise price > market price'},
+],
+/* ── Ind AS 38 — Intangible Assets ── */
+'38':[
+  {scenario:'Research costs — always expensed, never capitalised',rows:[
+    {acc:'Research & Development Expense (P&L)',dr:'[= All costs incurred during the RESEARCH phase: salaries of research team, laboratory materials, equipment used in research, consultant fees for feasibility studies]',cr:''},
+    {acc:'    Bank / Accounts Payable',dr:'',cr:'[= Same — research costs are NEVER capitalised regardless of how promising the research appears; Para 54 Ind AS 38]'},
+  ],narr:'Para 54-55 Ind AS 38 — research is defined as original planned investigation aimed at gaining new knowledge; ALL research costs are expensed as incurred without exception'},
+  {scenario:'Development costs — capitalised once all 6 criteria met',rows:[
+    {acc:'Intangible Asset Under Development (Balance Sheet)',dr:'[= All development costs from the date ALL 6 criteria are met: direct labour, materials, equipment costs, overheads directly attributable to the development project]',cr:''},
+    {acc:'    Bank / Accounts Payable / Accruals',dr:'',cr:'[= Total development expenditure incurred after the capitalisation trigger date]'},
+  ],narr:'Para 57 Ind AS 38 — development costs capitalised ONLY when all 6 criteria satisfied (technical feasibility, intention to complete, ability to use/sell, probable future benefits, adequate resources, reliable measurement); costs before the trigger date remain expensed'},
+  {scenario:'Amortisation of finite-life intangible asset',rows:[
+    {acc:'Amortisation Expense (P&L)',dr:'[= (Cost − Residual Value) ÷ Useful life in years; for software: typically 3-5 years straight-line; for patents: over patent life; begin when asset is available for use]',cr:''},
+    {acc:'    Accumulated Amortisation — Intangible Asset',dr:'',cr:'[= Same — reduce the carrying amount of the intangible; present as Intangible Assets net of accumulated amortisation on Balance Sheet]'},
+  ],narr:'Para 97-106 Ind AS 38 — finite useful life: amortise systematically over useful life; infinite useful life: NO amortisation but annual impairment test (Ind AS 36); review useful life and residual value at every year-end'},
+],
+/* ── Ind AS 40 — Investment Property ── */
+'40':[
+  {scenario:'Acquisition of investment property (commercial property for rental)',rows:[
+    {acc:'Investment Property — Cost',dr:'[= Purchase price PLUS stamp duty, registration charges, broker commission, legal fees, directly attributable transaction costs; Ind AS 40 uses same initial measurement principles as Ind AS 16]',cr:''},
+    {acc:'    Bank / Mortgage Loan Payable',dr:'',cr:'[= Cash paid PLUS loan drawdown; if partly financed, split between bank (cash) and loan (liability)]'},
+  ],narr:'Para 20-22 Ind AS 40 — investment property initially measured at cost including transaction costs; borrowing costs during construction period are capitalised per Ind AS 23'},
+  {scenario:'Annual depreciation on investment property (cost model — India only)',rows:[
+    {acc:'Depreciation Expense (P&L)',dr:'[= Cost of building component ÷ Useful life; land is NOT depreciated; apply component accounting for significant parts; Schedule II of Companies Act may guide useful life]',cr:''},
+    {acc:'    Accumulated Depreciation — Investment Property',dr:'',cr:'[= Same — India mandates cost model ONLY; note that IFRS allows fair value model but Ind AS carves this out]'},
+  ],narr:'Para 30 Ind AS 40 (India Carve-Out) — ONLY the cost model is permitted in India; fair value model is not available; however, FAIR VALUE MUST BE DISCLOSED in notes based on independent valuer report'},
+  {scenario:'Transfer from PPE to Investment Property (change of use — owner stops using own property)',rows:[
+    {acc:'Investment Property — Cost',dr:'[= Carrying amount (net book value) of the PPE at the date the change of use occurs = Cost of PPE MINUS accumulated depreciation at transfer date]',cr:''},
+    {acc:'    Property, Plant & Equipment — Cost',dr:'',cr:'[= Original cost of PPE being transferred]'},
+    {acc:'Accumulated Depreciation — PPE',dr:'[= Accumulated depreciation on PPE at transfer date]',cr:''},
+    {acc:'    Accumulated Depreciation — Investment Property',dr:'',cr:'[= Same amount — depreciation history follows the asset to its new classification]'},
+  ],narr:'Para 57-59 Ind AS 40 — transfer at cost model: no remeasurement on transfer; no gain/loss recognised; continue to depreciate; document the change of use with evidence (board minutes, vacancy, letting agreement)'},
+],
+/* ── Ind AS 113 — Fair Value Measurement ── */
+'113':[
+  {scenario:'Initial recognition at fair value — financial asset (FVTPL investment)',rows:[
+    {acc:'Investment — FVTPL (Balance Sheet at Fair Value)',dr:'[= Transaction price = exit price at recognition date; for actively traded securities = quoted price (Level 1); any difference between transaction price and FV = Day 1 gain/loss]',cr:''},
+    {acc:'    Bank / Trade Payable',dr:'',cr:'[= Actual cash paid to acquire the investment]'},
+    {acc:'Day 1 Gain or Loss (P&L) — if FV differs from transaction price',dr:'[= Fair Value at recognition MINUS transaction price; only recognise if FV is evidenced by a quoted price in an active market or based on valuation technique using only observable market data]',cr:''},
+  ],narr:'Para 9 Ind AS 113 / Para 5.1 Ind AS 109 — fair value at initial recognition is usually the transaction price; Day 1 gain/loss is recognised only when FV is determined using observable inputs (Level 1 or Level 2); Level 3 Day 1 gains are deferred'},
+  {scenario:'Period-end remeasurement to fair value — Level 1 (quoted shares)',rows:[
+    {acc:'Investment — FVTPL (Mark to Market)',dr:'[= Quoted market price at reporting date × Number of shares held MINUS carrying amount at last measurement date; record if market price increased]',cr:''},
+    {acc:'    Unrealised Gain on FVTPL Investment (P&L)',dr:'',cr:'[= Same — ALL fair value movements on FVTPL instruments go directly to P&L immediately; this creates P&L volatility]'},
+  ],narr:'Para 72-80 Ind AS 113 — Level 1 hierarchy: use unadjusted quoted prices in active markets; no adjustments for blockage discounts even for large holdings; mark to market at every reporting date'},
+  {scenario:'Period-end remeasurement — Level 3 DCF valuation (unlisted equity)',rows:[
+    {acc:'Investment — FVOCI or FVTPL (Unlisted Equity)',dr:'[= DCF valuation at year-end = PV of projected free cash flows ÷ WACC, plus terminal value ÷ (WACC - g) — MINUS current carrying amount; positive = FV increased]',cr:''},
+    {acc:'    Fair Value Gain in OCI (for FVOCI equity) or P&L (for FVTPL)',dr:'',cr:'[= Same — Level 3 values are based on unobservable management assumptions; require sensitivity analysis disclosure; significant judgement involved]'},
+  ],narr:'Para 86-90 Ind AS 113 — Level 3: use own assumptions calibrated to market conditions; must disclose quantitative information about unobservable inputs, valuation technique, and sensitivity; highest risk of manipulation'},
+],
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTEXT RULES — All industries and entity types with substantive guidance
+   ═══════════════════════════════════════════════════════════════════════════ */
+const CONTEXT_RULES={
+industries:{
+  'Banking & Financial Services':{color:'#1d4ed8',icon:'🏦',focus:['Ind AS 109 (ECL)','Ind AS 32','Ind AS 107'],notes:['ECL estimates must be consistent with RBI\'s IRACP norms (NPA classification, provisioning floors) — regulatory provision may exceed accounting ECL','Interest income on loans uses EIR method; processing fees integral to loan are part of EIR, not Ind AS 115 revenue','Investment portfolio classification (FVTPL/FVOCI/Amortised Cost) drives P&L volatility — coordinate with treasury strategy','Deferred tax on ECL allowance — DTA recognised only if future taxable profits probable; RBI stressed capital impact'],auditFocus:['ECL model validation (PD, LGD, EAD inputs)','Fair value of Level 2/3 investment portfolio','Hedge documentation and effectiveness','CRAR computation accuracy']},
+  'Insurance':{color:'#0369a1',icon:'🛡️',focus:['Ind AS 104/IFRS 17 roadmap','Ind AS 109','Ind AS 19'],notes:['Insurance contract liabilities — IRDAI reserving norms and Ind AS divergence creates complexity','Investment portfolio heavily FVOCI/FVTPL — policyholder fund vs shareholder fund separation critical','Employee benefit obligations (actuarial) are material for large insurers; defined benefit plans common'],auditFocus:['Policy liability adequacy test','Investment FV hierarchy','Reinsurance recoverable classification']},
+  'Real Estate & Construction':{color:'#b45309',icon:'🏗️',focus:['Ind AS 115','Ind AS 116','Ind AS 40'],notes:['Revenue on long-term construction contracts: recognise over time using input method (cost-incurred/total-cost) or output method','Variable consideration (price escalations, incentives) must be constrained if significant reversal probable — apply with care in current inflationary environment','Ind AS 116 land lease: assess whether contract contains a lease (right to control specific plot); IBR judgment for long tenors is key','Investment property at cost or FV model — disclose FV even if cost model used'],auditFocus:['POC/cost-to-completion estimates','Variable consideration constraint','Land vs building component split','Ind AS 115 vs IND AS 11 transition position']},
+  'Manufacturing':{color:'#059669',icon:'🏭',focus:['Ind AS 16','Ind AS 2','Ind AS 115'],notes:['Componentization of plant & machinery is mandatory — separately identify major components (e.g., engines, frames, control systems) with different useful lives','Export incentives (MEIS/SEIS/RoDTEP) — assess whether these qualify as government grants (Ind AS 20) or contract modification/variable consideration (Ind AS 115)','Inventory valuation: weighted average/FIFO — NRV test mandatory at year-end; provisions for slow-moving/obsolete stock','Warranty provisions: distinguish assurance-type (Ind AS 37) from service-type (Ind AS 115 separate PO)'],auditFocus:['Physical verification and componentization','Inventory NRV and provision adequacy','Bill-and-hold revenue cut-off','CapEx vs OpEx classification']},
+  'IT & Software':{color:'#7c3aed',icon:'💻',focus:['Ind AS 115','Ind AS 116','Ind AS 38'],notes:['SaaS/Cloud: assess whether license grants right to access IP (over time) or right to use IP (point in time) — critical for timing of revenue','Multi-element arrangements (license + implementation + AMC): identify each distinct performance obligation; SSP allocation drives front-loading vs deferral','Software development costs under Ind AS 38: capitalise from technological feasibility; define clear milestone for capitalisation commencement','Export revenue: FOREX (Ind AS 21) — functional currency determination key for offshore subsidiaries; hedge accounting for USD receivables'],auditFocus:['PO identification in multi-element contracts','SSP estimation for bundled contracts','R&D vs software development capitalisation boundary','IBR for leased office/data centre premises']},
+  'Retail & Consumer':{color:'#dc2626',icon:'🛒',focus:['Ind AS 115','Ind AS 116','Ind AS 2'],notes:['Loyalty programs (points/rewards): create a separate performance obligation — allocate transaction price to points based on standalone selling price of points','Store lease portfolio: Ind AS 116 material impact on EBITDA and leverage; variable rent (turnover-based) excluded from lease liability if not in-substance fixed','Revenue cut-off: gift vouchers (deferred revenue until redemption/breakage); sale-or-return arrangements (consignment accounting)','Inventory: NRV for seasonal/fashion goods must reflect post-year-end selling prices'],auditFocus:['Loyalty program PO valuation','Lease portfolio completeness and IBR','Revenue cut-off at year-end','Inventory NRV for slow/seasonal stock']},
+  'Oil & Gas':{color:'#92400e',icon:'⛽',focus:['Ind AS 16','Ind AS 37','Ind AS 115'],notes:['Decommissioning/Asset Retirement Obligation (ARO): capitalise PV of future restoration costs as part of PPE; unwind provision at risk-free rate annually','Production Sharing Contracts (PSC): revenue recognition — assess principal vs agent; government entitlement vs contractor share','Joint operations (Ind AS 111): proportionate consolidation of assets/liabilities/revenue/expenses of JO interest','Exploration costs (Ind AS 106 equivalent): successful-efforts vs full-cost — assess commercial viability before capitalisation'],auditFocus:['ARO estimate and discount rate','Reserve estimates impact on impairment','Revenue sharing PSC terms','Environmental provision adequacy']},
+  'Pharmaceuticals & Healthcare':{color:'#0891b2',icon:'💊',focus:['Ind AS 115','Ind AS 38','Ind AS 37'],notes:['Revenue: milestone payments in licensing arrangements — constrain variable consideration until milestone achievement highly probable','In-licensing/out-licensing of molecules: assess whether licence is a right to access (development-stage IP, over time) or right to use (functional IP, point in time)','R&D: research costs expensed; development costs capitalised from feasibility (Phase III completion typically); assess recoverability given regulatory risk','Contingent liabilities: litigation provisions (patent disputes, USFDA observations) require careful assessment of obligation and quantum'],auditFocus:['Milestone recognition under Ind AS 115','Development cost capitalisation criteria','IP licence — right to access vs right to use','Regulatory compliance provisions']},
+  'Telecom':{color:'#6d28d9',icon:'📡',focus:['Ind AS 115','Ind AS 116','Ind AS 38'],notes:['Bundled plans (handset + service): SSP allocation front-loads revenue to handset; straight-line for service PO — ensures revenue acceleration on subsidised handsets','Tower infrastructure: Ind AS 116 — passive infrastructure sharing arrangements; assess whether contract is a lease (identified asset + control criteria)','Spectrum licenses: finite life → amortise; indefinite life → impairment test annually per Ind AS 36','Subscriber acquisition costs: capitalise only if incremental costs to obtain a contract (Ind AS 115 Para 91); amortise over expected customer life'],auditFocus:['SSP determination for bundled offerings','Tower lease population completeness','Spectrum amortisation vs impairment','Contract cost capitalisation criteria']},
+  'Agriculture & Food Processing':{color:'#15803d',icon:'🌾',focus:['Ind AS 41','Ind AS 2','Ind AS 20'],notes:['Biological assets (livestock, crops, plantations): mandatory FV less costs to sell; day-one gain/loss if acquisition cost ≠ FVLCTS','Government grants for biological assets at FVLCTS: governed by Ind AS 41 (not Ind AS 20) — unconditional grants to P&L immediately when receivable','Bearer plants (mature tea, rubber, mango): treated as PPE under Ind AS 16; produce (leaves, fruit) is agricultural produce at FVLCTS at harvest','Food processing inventory: NRV at each stage (raw material, WIP, finished goods); consider post-year-end selling prices for perishables'],auditFocus:['FV determination of biological assets without active market','Physical count of livestock/crops','Government grant classification (Ind AS 41 vs 20)','NRV for perishable inventory']},
+  'Infrastructure & Utilities':{color:'#0369a1',icon:'🏗️',focus:['Ind AS 115','Ind AS 116','Ind AS 36'],notes:['Service concession arrangements (toll roads, airports): assess Ind AS 115 over time vs IFRIC 12 interpretation — infrastructure may need to be recognised as financial asset or intangible','Long-term PPA / take-or-pay contracts: assess if embedded lease (Ind AS 116); variable payments vs in-substance fixed','Regulated entities: tariff revision impacts — if rate regulated, assess timing difference vs future rate recovery','Impairment of infrastructure CGUs: VIU based on regulatory-approved cash flows; pre-tax WACC often 10-12% range'],auditFocus:['Service concession accounting model','Embedded lease in PPA/supply contracts','Regulatory tariff recovery timing','CGU definition for impairment']},
+  'Automobiles':{color:'#475569',icon:'🚗',focus:['Ind AS 115','Ind AS 16','Ind AS 37'],notes:['Dealer incentives/volume discounts: variable consideration — constrain if highly variable; presented net of revenue','Warranty provisions: product warranty over useful life — actuarial estimation; extended warranties are separate PO under Ind AS 115','Tool and die assets: capitalise as PPE or amortise as contract fulfillment costs; assess control transfer to customer','Bill-and-hold: dealer stock — assess control transfer; floor-plan financing implications for revenue recognition timing'],auditFocus:['Variable consideration — dealer incentives','Warranty provision estimation','Product recall liabilities','Bill-and-hold revenue cut-off']},
+  'Shipping & Logistics':{color:'#0891b2',icon:'🚢',focus:['Ind AS 116','Ind AS 15','Ind AS 21'],notes:['Vessel leases under Ind AS 116 — time charters assessed for lease vs service; bareboat charters typically meet lease definition','Multiple performance obligations: freight + handling + customs + insurance — assess if bundled or sold separately','Foreign currency exposure significant: USD freight contracts vs INR costs; monetary receivables/payables restated at year-end closing rate','Stage of completion for in-transit cargo: revenue recognised over transit period if over-time criteria met'],auditFocus:['Time charter — lease vs service','Revenue cut-off for in-transit cargo','FOREX restatement completeness','Container/vessel impairment']},
+},
+entityTypes:{
+  'Listed / Public Company':{color:'#1d4ed8',icon:'📊',notes:['SEBI LODR Reg. 33 — quarterly Ind AS financial results mandatory; ensure Ind AS adjustments flow through quarterly numbers consistently','Related party transactions per Reg. 23 of LODR — shareholder approval thresholds; disclosure beyond Ind AS 24 requirements','CEO/CFO certification under Reg. 17 covers adequacy of accounting controls and correctness of financial statements','Auditor reporting on IFC over financial reporting under Companies Act 2013 — additional commentary required in audit report'],auditFocus:['SEBI LODR quarterly result consistency','Related party transaction approval and disclosure','IFC reporting','Management representation letter scope']},
+  'Unlisted Public Company':{color:'#0891b2',icon:'🏢',notes:['Ind AS mandatory for unlisted public companies with net worth ≥ ₹250 crore or turnover ≥ ₹500 crore','CARO 2020 reporting requirements — specific comments on loans, investments, related parties, fraud','Schedule III (Division II) applicable — presentation requirements may differ from IGAAP equivalents'],auditFocus:['Ind AS applicability threshold check','CARO 2020 compliance','Schedule III presentation']},
+  'Private Limited Company':{color:'#475569',icon:'🏠',notes:['Voluntary adoption of Ind AS permitted; if adopted, full compliance mandatory','CARO 2020 may apply depending on turnover/loan thresholds','Related party disclosures critical given closely-held nature; assess arm\'s length pricing'],auditFocus:['CARO 2020 threshold determination','RPT arm\'s length assessment','Going concern assessment']},
+  'Bank / NBFC':{color:'#dc2626',icon:'🏦',notes:['RBI Master Directions on ECL implementation (April 2023 onwards for NBFCs) — regulatory provisions set floors; accounting ECL may be lower (create deferred tax)','NBFC categorisation: Base Layer/Middle Layer/Upper Layer — different Ind AS compliance timelines and regulatory requirements','DTA on excess regulatory provision over accounting ECL — assess recoverability against future taxable profits carefully','Capital adequacy ratio (CRAR) computed on Ind AS financials; transitional adjustments under RBI circular may apply'],auditFocus:['Regulatory vs accounting ECL reconciliation','DTA recoverability on provisioning','CRAR computation accuracy','RBI inspection findings — provision alignment']},
+  'Insurance Company':{color:'#7c3aed',icon:'🛡️',notes:['IRDAI investment valuation norms co-exist with Ind AS 109 — differences in classification and measurement need reconciliation','Policy liability (actuarial) measurement — insurance contract liabilities; regulatory vs Ind AS basis divergence','Solvency margin computation uses Ind AS financial statements; ensure sensitivity analysis disclosed'],auditFocus:['Policy liability adequacy','Solvency margin computation','Investment portfolio FV hierarchy','Reinsurance treaty terms']},
+  'Government Entity':{color:'#15803d',icon:'🏛️',notes:['Government Business Entities (GBEs): Ind AS applicable if listed or meeting thresholds; others follow Government Accounting Standards','Government grants received: Ind AS 20 — distinguish between grants related to assets (deferred and amortised) and income grants (P&L when conditions met)','Public sector undertakings (PSUs): minority government ownership may affect consolidation assessment (effective control vs legal ownership)'],auditFocus:['Ind AS applicability to PSU','Government grant recognition and presentation','Related party — government transactions','CAG audit interface']},
+  'LLP / Partnership':{color:'#92400e',icon:'📋',notes:['LLPs typically follow IGAAP; Ind AS adoption only if listed (equity/debt) or meeting thresholds','Partner capital accounts — distinguish between partners\' equity and debt components under Ind AS 32','Profit-sharing — assess puttable instruments classification; may require liability treatment under Ind AS 32'],auditFocus:['Ind AS vs IGAAP applicability','Partner capital — equity vs liability','CARO applicability']},
+}};
+
+function getContextNotes(std,ctx){
+  const notes=[];
+  const indRule=CONTEXT_RULES.industries[ctx.industry];
+  const entRule=CONTEXT_RULES.entityTypes[ctx.entityType];
+  if(indRule)notes.push({type:'industry',label:ctx.industry,icon:indRule.icon,color:indRule.color,focus:indRule.focus,items:indRule.notes,auditFocus:indRule.auditFocus});
+  if(entRule&&ctx.entityType!=='Listed / Public Company'||entRule)notes.push({type:'entity',label:ctx.entityType,icon:entRule?entRule.icon:'🏢',color:entRule?entRule.color:'#475569',items:entRule?entRule.notes:[],auditFocus:entRule?entRule.auditFocus:[]});
+  return notes.filter(n=>n.items&&n.items.length>0);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EXPORT ENGINE — Professional Report
+   ═══════════════════════════════════════════════════════════════════════════ */
+function exportReport(stds,transaction,ctx,caseStudy){
+  const now=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  const stdNames=stds.map(s=>s.id+' \u2014 '+s.title).join('; ');
+  const stepsHTML=stds.map(s=>`<div style="margin-bottom:24px"><h3 style="color:#1d4ed8;border-bottom:2px solid #1d4ed8;padding-bottom:4px">${s.id} \u2014 ${s.title}</h3>${s.steps.map(st=>`<div style="margin:8px 0"><strong>${st.n}: ${st.title}</strong> <span style="background:#eff6ff;color:#1d4ed8;font-size:11px;padding:2px 6px;border-radius:4px">${st.para}</span><p style="margin:4px 0;color:#475569;font-size:13px">${st.detail}</p></div>`).join('')}</div>`).join('');
+  const discHTML=stds.map(s=>`<h4>${s.id}</h4>${s.disclosures.map(d=>`<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px;margin:6px 0"><strong>${d.head}</strong><p style="margin:4px 0;font-size:13px;color:#475569">${d.body}</p></div>`).join('')}`).join('');
+  const riskHTML=stds.flatMap(s=>s.auditRisks.map(r=>`<tr><td style="border:1px solid #e2e8f0;padding:6px 10px;font-size:12px">${s.id}</td><td style="border:1px solid #e2e8f0;padding:6px 10px;font-size:12px">${r.risk}</td><td style="border:1px solid #e2e8f0;padding:6px 10px;font-size:12px"><span style="background:${r.level==='High'?'#fee2e2':r.level==='Medium'?'#fef9c3':'#dcfce7'};color:${r.level==='High'?'#b91c1c':r.level==='Medium'?'#a16207':'#15803d'};font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px">${r.level}</span></td><td style="border:1px solid #e2e8f0;padding:6px 10px;font-size:12px;color:#475569">${r.proc}</td></tr>`)).join('');
+  let caseHTML='';
+  if(caseStudy){
+    const aHTML=caseStudy.analysis.map(a=>`<h4 style="color:#1e3a8a;margin:12px 0 6px">${a.heading}</h4><table style="width:100%;border-collapse:collapse;font-size:12px">${a.entries.map(e=>`<tr style="${e.highlight?'background:#eff6ff;font-weight:600':''}"><td style="border:1px solid #e2e8f0;padding:6px 10px">${e.label}</td><td style="border:1px solid #e2e8f0;padding:6px 10px;text-align:right">${e.val||''}</td><td style="border:1px solid #e2e8f0;padding:6px 10px;text-align:right;font-weight:600">${e.inr||''}</td></tr>`).join('')}</table>`).join('');
+    const jHTML=caseStudy.journals.map(j=>`<h4 style="margin:10px 0 4px">${j.title}</h4><table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:#f1f5f9"><th style="border:1px solid #e2e8f0;padding:6px 10px;text-align:left">Account</th><th style="border:1px solid #e2e8f0;padding:6px 10px;text-align:right">Dr.</th><th style="border:1px solid #e2e8f0;padding:6px 10px;text-align:right">Cr.</th></tr>${j.rows.map(r=>`<tr><td style="border:1px solid #e2e8f0;padding:6px 10px">${r.acc}</td><td style="border:1px solid #e2e8f0;padding:6px 10px;text-align:right;color:#1d4ed8;font-weight:600">${r.dr}</td><td style="border:1px solid #e2e8f0;padding:6px 10px;text-align:right;color:#15803d;font-weight:600">${r.cr}</td></tr>`).join('')}<tr><td colspan="3" style="border:1px solid #e2e8f0;padding:6px 10px;font-style:italic;color:#64748b;font-size:11px;background:#f8fafc">Narration: ${j.narr}</td></tr></table>`).join('');
+    caseHTML=`<h2 style="color:#1e3a8a;margin:24px 0 8px">Detailed Analysis</h2>${aHTML}<h2 style="color:#1e3a8a;margin:24px 0 8px">Journal Entries</h2>${jHTML}`;
+  }
+  const ctxNotes=getContextNotes(null,ctx);
+  const ctxHTML=ctxNotes.length?`<div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:14px;margin:12px 0"><strong style="font-size:13px">Context: ${ctx.industry} / ${ctx.entityType}</strong>${ctxNotes.map(n=>`<div style="margin-top:8px"><div style="font-weight:600;font-size:12px;color:${n.color};margin-bottom:4px">${n.icon} ${n.label}${n.focus?` &nbsp;<span style="font-weight:400;color:#64748b;font-size:11px">Focus: ${n.focus.join(', ')}</span>`:''}:</div>${(n.items||[]).map(item=>`<p style="margin:3px 0 3px 12px;font-size:12px;color:#475569">• ${item}</p>`).join('')}${n.auditFocus&&n.auditFocus.length?`<p style="margin:4px 0 0 12px;font-size:11px;color:#7c3aed"> Audit focus: ${n.auditFocus.join(' · ')}</p>`:''}</div>`).join('')}</div>`:'';
+  const jeHTML=stds.map(s=>{const models=JE_MODELS[s.id.replace('Ind AS ','')]||[];if(!models.length)return '';return `<h3 style="color:#1d4ed8;margin:16px 0 6px">${s.id} — ${s.title}</h3>${models.map(m=>`<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;border-left:3px solid #7c3aed;padding-left:8px;margin-bottom:6px">${m.scenario}</div><table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:#f1f5f9"><th style="border:1px solid #e2e8f0;padding:6px 10px;text-align:left">Account</th><th style="border:1px solid #e2e8f0;padding:6px 10px;text-align:left;width:35%">Dr. (How to Derive)</th><th style="border:1px solid #e2e8f0;padding:6px 10px;text-align:left;width:35%">Cr. (How to Derive)</th></tr>${m.rows.map(r=>`<tr><td style="border:1px solid #e2e8f0;padding:6px 10px">${r.acc}</td><td style="border:1px solid #e2e8f0;padding:6px 10px;color:#1d4ed8;font-style:${r.dr?'italic':'normal'}">${r.dr||''}</td><td style="border:1px solid #e2e8f0;padding:6px 10px;color:#15803d;font-style:${r.cr?'italic':'normal'}">${r.cr||''}</td></tr>`).join('')}<tr><td colspan="3" style="border:1px solid #e2e8f0;padding:6px 10px;font-style:italic;color:#64748b;font-size:11px;background:#f8fafc">Narration: ${m.narr}</td></tr></table></div>`).join('')}`;}).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Ind AS Analysis Report</title><style>body{font-family:'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:40px;color:#1e293b;font-size:14px;line-height:1.6}h1{color:#0c1929;font-size:22px}h2{color:#1e3a8a;font-size:16px;border-bottom:1px solid #e2e8f0;padding-bottom:4px}h3{font-size:15px}table{border-collapse:collapse;width:100%;margin:8px 0}@media print{body{padding:20px}}</style></head><body>
+<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #0c1929;padding-bottom:12px;margin-bottom:24px">
+<div><h1 style="margin:0">Ind AS Accounting Copilot</h1><div style="color:#64748b;font-size:12px">Professional Analysis Report</div></div>
+<div style="text-align:right"><div style="font-weight:700;color:#0c1929">Vipin Nair</div><div style="font-size:11px;color:#64748b">${now}</div></div>
+</div>
+<h2>1. Transaction / Scenario</h2>
+<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:13px;white-space:pre-wrap">${transaction}</div>
+<div style="margin:10px 0;font-size:12px;color:#64748b">Context: ${ctx.industry} Ind AS (India) ${ctx.entityType}</div>
+${ctxHTML}
+<h2>2. Applicable Standards</h2>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">${stds.map(s=>`<span style="background:${s.bg};color:${s.color};padding:4px 12px;border-radius:6px;font-weight:700;font-size:13px">${s.id}</span>`).join('')}</div>
+<p>${stdNames}</p>
+<h2>3. Recognition & Measurement Framework</h2>
+${stepsHTML}
+${caseHTML}
+<h2>4. Journal Entry Models</h2>
+<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;margin:8px 0;font-size:12px;color:#1d4ed8"><strong>Entry Model:</strong> Each debit/credit column shows the formula or derivation rule — apply your actual transaction figures to compute the amounts.</div>
+${jeHTML}
+<h2>5. Disclosure Requirements</h2>
+${discHTML}
+<h2>6. Audit Risk Assessment</h2>
+<table><tr style="background:#f1f5f9"><th style="border:1px solid #e2e8f0;padding:6px 10px;font-size:12px">Standard</th><th style="border:1px solid #e2e8f0;padding:6px 10px;font-size:12px">Risk</th><th style="border:1px solid #e2e8f0;padding:6px 10px;font-size:12px">Level</th><th style="border:1px solid #e2e8f0;padding:6px 10px;font-size:12px">Procedure</th></tr>${riskHTML}</table>
+<div style="margin-top:32px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center">
+<strong>Disclaimer:</strong> This report is AI-generated as a drafting aid. It does not constitute professional advice.<br/>Generated by Ind AS Accounting Copilot Vipin Nair ${now}
+</div></body></html>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close();
+  setTimeout(()=>w.print(),600);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REACT COMPONENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+const Spin=()=><svg className="animate-spin" style={{width:16,height:16}} viewBox="0 0 24 24" fill="none"><circle style={{opacity:.25}} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path style={{opacity:.75}} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.37 0 0 5.37 0 12h4z"/></svg>;
+const Badge=({l})=><span className={`badge ${l==='Low'?'b-low':l==='Medium'?'b-med':'b-high'}`}>{l}</span>;
+
+function JETable({rows,narr}){
+  return <div style={{marginBottom:16}}><table className="je-table"><thead><tr><th>Account</th><th style={{textAlign:'right',width:140}}>Debit</th><th style={{textAlign:'right',width:140}}>Credit</th></tr></thead><tbody>
+    {rows.map((r,i)=><tr key={i}><td className={r.cr&&!r.dr?'cr':''}>{r.acc}</td><td style={{textAlign:'right'}} className="dr">{r.dr}</td><td style={{textAlign:'right'}} className="dr" style={{textAlign:'right',color:'#15803d',fontWeight:600}}>{r.cr}</td></tr>)}
+    {narr&&<tr><td colSpan={3} className="narr">Narration: {narr}</td></tr>}
+  </tbody></table></div>;
+}
+
+function CaseStudyView({cs,ctx}){
+  const [tab,setTab]=useState('analysis');
+  const stds=cs.stds.map(name=>{const k=Object.keys(STDS).find(k=>STDS[k].id===name);return k?STDS[k]:null;}).filter(Boolean);
+  const ctxNotes=stds.flatMap(s=>getContextNotes(s,ctx));
+  return <div className="card" style={{marginTop:16}}>
+    <div style={{padding:'16px 20px',borderBottom:'1px solid #e2e8f0',background:'linear-gradient(135deg,#f8fafc,#fff)',borderRadius:'12px 12px 0 0'}}>
+      <div style={{fontSize:18,fontWeight:700,color:'#1e293b',marginBottom:4}}>{cs.title}</div>
+      <div className="multi-std-strip" style={{padding:'8px 0',background:'transparent',borderBottom:'none'}}>
+        {cs.stds.map(s=>{const st=Object.values(STDS).find(x=>x.id===s);return <span key={s} className="std-badge" style={{background:st?st.bg:'#f1f5f9',color:st?st.color:'#475569'}}>{s}</span>;})}
+      </div>
+      <div style={{fontSize:13,color:'#64748b',whiteSpace:'pre-wrap',lineHeight:1.6,marginTop:8}}>{cs.scenario}</div>
+      {ctxNotes.length>0&&<div className="context-note" style={{marginTop:10}}>{ctxNotes.map((n,i)=><div key={i} style={{marginBottom:6}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}><span style={{fontSize:14}}>{n.icon}</span><span className="ctx-tag" style={{background:n.color+'22',color:n.color,border:'1px solid '+n.color+'44'}}>{n.label}</span>{n.focus&&n.focus.map((f,j)=><span key={j} className="ctx-tag" style={{background:'#f1f5f9',color:'#475569',fontSize:10}}>{f}</span>)}</div>
+          {n.items&&n.items.slice(0,2).map((item,j)=><div key={j} style={{fontSize:12,color:'#475569',paddingLeft:8,borderLeft:'2px solid '+n.color+'44',lineHeight:1.5,marginBottom:2}}>• {item}</div>)}
+        </div>)}</div>}
+    </div>
+    <div style={{display:'flex',borderBottom:'1px solid #e2e8f0',padding:'0 8px'}}>
+      {[{id:'analysis',l:'\uD83D\uDCCA Analysis'},{id:'journals',l:'\uD83D\uDCD2 Journal Entries'},{id:'memo',l:' Audit Memo'}].map(t=><div key={t.id} className={`tab-btn ${tab===t.id?'active':''}`} onClick={()=>setTab(t.id)}>{t.l}</div>)}
+    </div>
+    <div style={{padding:20}}>
+      {tab==='analysis'&&cs.analysis.map((a,i)=><div key={i} style={{marginBottom:20}}>
+        <div style={{fontWeight:700,fontSize:14,color:'#1e3a8a',marginBottom:8}}>{a.heading}</div>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+          {a.entries.map((e,j)=><tr key={j} style={{background:e.highlight?'#eff6ff':''}}>
+            <td style={{border:'1px solid #e2e8f0',padding:'7px 10px',fontWeight:e.highlight?600:400}}>{e.label}</td>
+            <td style={{border:'1px solid #e2e8f0',padding:'7px 10px',textAlign:'right',color:'#64748b'}}>{e.val}</td>
+            <td style={{border:'1px solid #e2e8f0',padding:'7px 10px',textAlign:'right',fontWeight:600,color:e.highlight?'#1d4ed8':'#334155'}}>{e.inr}</td>
+          </tr>)}
+        </table>
+      </div>)}
+      {tab==='journals'&&cs.journals.map((j,i)=><div key={i} style={{marginBottom:20}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#64748b',textTransform:'uppercase',letterSpacing:.5,marginBottom:6}}>{j.title}</div>
+        <JETable rows={j.rows} narr={j.narr}/>
+      </div>)}
+      {tab==='memo'&&<div>
+        <div className="memo-s"><div style={{fontWeight:700,fontSize:12,color:'#1e3a8a'}}>SUBJECT: {cs.title}</div></div>
+        <div className="memo-s"><div style={{fontWeight:700,fontSize:12,color:'#1e293b',marginBottom:6}}>STANDARDS INVOLVED</div><div style={{fontSize:12,color:'#475569'}}>{cs.stds.join(', ')}</div></div>
+        <div className="memo-s"><div style={{fontWeight:700,fontSize:12,color:'#1e293b',marginBottom:6}}>AUDIT RISK AREAS</div>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}><thead><tr style={{background:'#f8fafc'}}>{['Standard','Risk','Level','Procedure'].map(h=><th key={h} style={{padding:'6px 10px',textAlign:'left',color:'#475569',fontWeight:600,border:'1px solid #e2e8f0'}}>{h}</th>)}</tr></thead><tbody>
+            {stds.flatMap(s=>s.auditRisks.map((r,ri)=><tr key={s.id+ri} style={{background:ri%2?'#f8fafc':'#fff'}}><td style={{padding:'6px 10px',border:'1px solid #e2e8f0'}}>{s.id}</td><td style={{padding:'6px 10px',border:'1px solid #e2e8f0'}}>{r.risk}</td><td style={{padding:'6px 10px',border:'1px solid #e2e8f0'}}><Badge l={r.level}/></td><td style={{padding:'6px 10px',border:'1px solid #e2e8f0',color:'#475569'}}>{r.proc}</td></tr>))}
+          </tbody></table>
+        </div>
+        <div style={{background:'#fef3c7',border:'1px solid #fde68a',borderRadius:8,padding:12,fontSize:11,color:'#92400e',marginTop:12}}><strong>Disclaimer:</strong> AI-generated drafting aid. The audit team must review and customise.</div>
+      </div>}
+    </div>
+    <div style={{padding:'12px 20px',borderTop:'1px solid #e2e8f0',background:'#f8fafc',borderRadius:'0 0 12px 12px',display:'flex',justifyContent:'flex-end'}}>
+      <button onClick={()=>exportReport(stds,cs.scenario,ctx,cs)} style={{background:'#1d4ed8',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}> Export Report (Print/PDF)</button>
+    </div>
+  </div>;
+}
+
+function ResultsView({stds,transaction,ctx}){
+  const [tab,setTab]=useState('recognition');
+  const [activeStd,setActiveStd]=useState(0);
+  const std=stds[activeStd];
+  const ctxNotes=getContextNotes(std,ctx);
+  const parsed=parseAmounts(transaction);
+  const tabs=[{id:'recognition',l:'\uD83D\uDCCB Recognition'},{id:'measurement',l:'\uD83D\uDCD0 Measurement'},{id:'journals',l:'\uD83D\uDCD2 Journal Entries'},{id:'disclosure',l:'Disclosure'},{id:'memo',l:' Audit Memo'}];
+
+  return <div className="card" style={{marginTop:20}}>
+    {/* Multi-Standard Strip */}
+    <div className="multi-std-strip" style={{borderRadius:'12px 12px 0 0'}}>
+      <span style={{fontSize:11,fontWeight:700,color:'#64748b',letterSpacing:1,alignSelf:'center'}}>STANDARDS IDENTIFIED:</span>
+      {stds.map((s,i)=><span key={s.id} onClick={()=>{setActiveStd(i);setTab('recognition');}} className="std-badge" style={{background:i===activeStd?s.color:s.bg,color:i===activeStd?'#fff':s.color,cursor:'pointer',transition:'all .15s'}}>{s.id}</span>)}
+    </div>
+    {/* Active Standard Header */}
+    <div style={{padding:'14px 20px',borderBottom:'1px solid #e2e8f0'}}>
+      <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+        <span style={{fontSize:16,fontWeight:700,color:'#1e293b'}}>{std.title}</span>
+        <Badge l={std.complexity}/>
+      </div>
+      <div style={{fontSize:12,color:'#64748b',marginTop:4}}>{std.steps[0].detail.slice(0,120)}...</div>
+      <div style={{marginTop:6,display:'flex',flexWrap:'wrap',gap:4}}>{std.keyParas.map(p=><span key={p} className="para-ref">{p}</span>)}</div>
+      {ctxNotes.length>0&&<div className="context-note" style={{marginTop:10}}>
+        {ctxNotes.map((n,i)=><div key={i} style={{marginBottom:8}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+            <span style={{fontSize:16}}>{n.icon}</span>
+            <span className="ctx-tag" style={{background:n.color+'22',color:n.color,border:'1px solid '+n.color+'44'}}>{n.label}</span>
+            {n.focus&&n.focus.map((f,j)=><span key={j} className="ctx-tag" style={{background:'#f1f5f9',color:'#475569',fontSize:10}}>{f}</span>)}
+          </div>
+          {n.items&&n.items.map((item,j)=><div key={j} style={{fontSize:12,color:'#475569',marginBottom:3,paddingLeft:8,borderLeft:'2px solid '+n.color+'44',lineHeight:1.5}}>• {item}</div>)}
+          {n.auditFocus&&n.auditFocus.length>0&&<div style={{fontSize:11,color:'#7c3aed',marginTop:4,paddingLeft:8}}> Audit focus: {n.auditFocus.join(' · ')}</div>}
+        </div>)}
+      </div>}
+    </div>
+    {/* Tabs */}
+    <div style={{display:'flex',overflowX:'auto',padding:'0 8px',borderBottom:'1px solid #e2e8f0'}}>
+      {tabs.map(t=><div key={t.id} className={`tab-btn ${tab===t.id?'active':''}`} onClick={()=>setTab(t.id)}>{t.l}</div>)}
+    </div>
+    <div style={{padding:20}}>
+      {tab==='recognition'&&<div>{std.steps.map((s,i)=><div key={i} style={{marginBottom:16,display:'flex',gap:12}}>
+        <div style={{background:std.bg,color:std.color,fontWeight:700,fontSize:11,padding:'4px 8px',borderRadius:6,height:'fit-content',whiteSpace:'nowrap'}}>{s.n}</div>
+        <div><div style={{fontWeight:600,fontSize:13,color:'#1e293b',marginBottom:3}}>{s.title} <span className="para-ref">{s.para}</span></div><div style={{fontSize:13,color:'#475569',lineHeight:1.6}}>{s.detail}</div></div>
+      </div>)}</div>}
+
+      {tab==='measurement'&&<div>
+        {std.steps.slice(1,4).map((s,i)=><div key={i} style={{marginBottom:14,paddingBottom:14,borderBottom:i<2?'1px solid #e2e8f0':'none'}}>
+          <div style={{fontWeight:600,fontSize:13,color:'#1e293b',marginBottom:4}}>{s.title} <span className="para-ref">{s.para}</span></div>
+          <div style={{fontSize:13,color:'#475569',lineHeight:1.6}}>{s.detail}</div>
+        </div>)}
+        {parsed.amounts.length>0&&<div style={{background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:8,padding:12,marginTop:8}}>
+          <div style={{fontWeight:600,fontSize:12,color:'#1d4ed8',marginBottom:4}}>Amounts Detected in Transaction:</div>
+          {parsed.amounts.map((a,i)=><div key={i} style={{fontSize:12,color:'#334155'}}>{a.raw} = {a.cur==='INR'?fmtINR(a.val):a.cur+' '+a.val.toLocaleString()}</div>)}
+          {parsed.pcts.length>0&&<div style={{fontSize:12,color:'#334155',marginTop:4}}>Rates: {parsed.pcts.map(p=>p+'%').join(', ')}</div>}
+          {parsed.yrs.length>0&&<div style={{fontSize:12,color:'#334155'}}>Period(s): {parsed.yrs.join(', ')} {parsed.yrs.length===1?'year/month':'years/months'}</div>}
+        </div>}
+      </div>}
+
+      {tab==='journals'&&<div>
+        <div style={{fontWeight:600,color:'#1e293b',marginBottom:4,fontSize:14}}>Journal Entry Models — {std.id}</div>
+        <div style={{background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:8,padding:10,marginBottom:14,fontSize:12,color:'#1d4ed8'}}>
+          <strong>Entry Model:</strong> Each debit/credit shows the formula or rule to derive the amount — apply your actual transaction figures to these descriptions.
+        </div>
+        {(JE_MODELS[std.id.replace('Ind AS ','')]||[]).length===0&&<div style={{fontSize:13,color:'#64748b',fontStyle:'italic'}}>Entry models for {std.id} — refer to the recognition and measurement tabs for the accounting treatment.</div>}
+        {(JE_MODELS[std.id.replace('Ind AS ','')]||[]).map((model,mi)=><div key={mi} style={{marginBottom:20}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#7c3aed',textTransform:'uppercase',letterSpacing:.5,marginBottom:6,paddingLeft:4,borderLeft:'3px solid #7c3aed'}}>{model.scenario}</div>
+          <JETable rows={model.rows} narr={model.narr}/>
+        </div>)}
+      </div>}
+
+      {tab==='disclosure'&&<div>
+        {std.disclosures.map((d,i)=><div key={i} className="d-block"><div style={{fontWeight:600,color:'#1e293b',marginBottom:4,fontSize:13}}>{d.head}</div><div style={{color:'#475569'}}>{d.body}</div></div>)}
+      </div>}
+
+      {tab==='memo'&&<div>
+        <div className="memo-s"><div style={{fontWeight:700,fontSize:12,color:'#1e3a8a'}}>SUBJECT: Accounting Treatment \u2014 {std.id}</div><div style={{fontSize:12,color:'#475569'}}>Transaction: "{transaction.slice(0,100)}{transaction.length>100?'...':''}"</div></div>
+        <div className="memo-s"><div style={{fontWeight:700,fontSize:12,color:'#1e293b',marginBottom:6}}>APPLICABLE GUIDANCE</div><div style={{fontSize:12,color:'#475569'}}>{std.id} \u2014 {std.title}. Key paragraphs: {std.keyParas.join(', ')}.</div></div>
+        <div className="memo-s"><div style={{fontWeight:700,fontSize:12,color:'#1e293b',marginBottom:6}}>AUDIT RISK AREAS</div>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}><thead><tr style={{background:'#f8fafc'}}>{['Risk','Level','Procedure'].map(h=><th key={h} style={{padding:'6px 10px',textAlign:'left',color:'#475569',fontWeight:600,border:'1px solid #e2e8f0'}}>{h}</th>)}</tr></thead><tbody>
+            {std.auditRisks.map((r,i)=><tr key={i}><td style={{padding:'6px 10px',border:'1px solid #e2e8f0'}}>{r.risk}</td><td style={{padding:'6px 10px',border:'1px solid #e2e8f0'}}><Badge l={r.level}/></td><td style={{padding:'6px 10px',border:'1px solid #e2e8f0',color:'#475569'}}>{r.proc}</td></tr>)}
+          </tbody></table>
+        </div>
+        <div style={{background:'#fef3c7',border:'1px solid #fde68a',borderRadius:8,padding:12,fontSize:11,color:'#92400e',marginTop:12}}><strong>Disclaimer:</strong> AI-generated drafting aid. Review and customise before reliance.</div>
+      </div>}
+    </div>
+    {/* Footer */}
+    <div style={{padding:'12px 20px',borderTop:'1px solid #e2e8f0',background:'#f8fafc',borderRadius:'0 0 12px 12px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+        {std.followUps.map((q,i)=><span key={i} className="follow-chip">{q}</span>)}
+      </div>
+      <button onClick={()=>exportReport(stds,transaction,ctx,null)} style={{background:'#1d4ed8',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>Export Report</button>
+    </div>
+  </div>;
+}
+
+function Sidebar({mode,setMode,ctx,setCtx,onCase}){
+  return <div className="sidebar">
+    <div style={{padding:'14px',borderBottom:'1px solid #e2e8f0'}}>
+      <div style={{fontSize:11,fontWeight:700,color:'#94a3b8',letterSpacing:1,marginBottom:8}}>ANALYSIS MODE</div>
+      {[{id:'quick',icon:'\u26A1',label:'Quick Treatment'},{id:'audit',icon:'',label:'Audit Memo'},{id:'cases',icon:'\uD83D\uDCDA',label:'Case Studies'}].map(m=>
+        <div key={m.id} className={`mode-btn ${mode===m.id?'active':''}`} onClick={()=>setMode(m.id)}><span>{m.icon}</span><span>{m.label}</span></div>
+      )}
+    </div>
+    <div style={{padding:'14px',borderBottom:'1px solid #e2e8f0'}}>
+      <div style={{fontSize:11,fontWeight:700,color:'#94a3b8',letterSpacing:1,marginBottom:8}}>SET YOUR CONTEXT</div>
+      <div style={{marginBottom:8}}><div style={{fontSize:11,fontWeight:600,color:'#64748b',marginBottom:3}}>Industry</div><select className="select-s" value={ctx.industry} onChange={e=>setCtx({...ctx,industry:e.target.value})}>{INDUSTRIES.map(o=><option key={o}>{o}</option>)}</select></div>
+      <div style={{marginBottom:8}}><div style={{fontSize:11,fontWeight:600,color:'#64748b',marginBottom:3}}>Entity Type</div><select className="select-s" value={ctx.entityType} onChange={e=>setCtx({...ctx,entityType:e.target.value})}>{ENTITY_TYPES.map(o=><option key={o}>{o}</option>)}</select></div>
+      <div style={{fontSize:10,color:'#94a3b8',fontStyle:'italic',marginTop:4}}>Context adds industry/entity-specific guidance notes to your analysis results.</div>
+    </div>
+    <div style={{padding:'14px'}}>
+      <div style={{fontSize:11,fontWeight:700,color:'#94a3b8',letterSpacing:1,marginBottom:8}}>QUICK EXAMPLES</div>
+      {[
+        {l:'\u20B950L SaaS Revenue (3-yr)',t:'Customer paid \u20B950 lakh upfront for a 3-year SaaS license with annual support and implementation services.'},
+        {l:'Office Lease \u20B92L/month',t:'Company signed a 5-year office lease at \u20B92 lakh per month. IBR is 9% per annum.'},
+        {l:'Gratuity Valuation',t:'Actuarial valuation: DBO \u20B985 lakh, plan assets \u20B960 lakh, current service cost \u20B912 lakh, interest cost \u20B96 lakh, actuarial loss \u20B94 lakh.'},
+        {l:'ECL on Receivables',t:'Trade receivables \u20B9120 crore. 30-60 days: \u20B925 Cr; 60-90: \u20B910 Cr; >90 days: \u20B98 Cr. ECL rates: 2%, 8%, 25%.'},
+        {l:'Inventory Write-Down',t:'Finished goods inventory cost \u20B980 crore. Post year-end selling prices indicate NRV of \u20B965 crore. Assess impairment of slow-moving stock.'},
+        {l:'Borrowing Cost Capitalisation',t:'Company borrowed \u20B9200 crore at 9% p.a. specifically to build a factory (qualifying asset). Construction started April 1 and is still ongoing. Calculate borrowing costs to capitalise.'},
+        {l:'EPS with ESOP Dilution',t:'Net profit \u20B950 crore. Preference dividend \u20B95 crore. Weighted average shares 10 crore. ESOPs outstanding: 50 lakh options at exercise price \u20B9120, average market price \u20B9180.'},
+        {l:'Investment Property',t:'Company owns commercial office building held for rental income, carried at cost \u20B9150 crore, accumulated depreciation \u20B930 crore, fair value estimated at \u20B9280 crore.'},
+        {l:'Software Development Costs',t:'IT company incurred \u20B920 crore on R&D. Phase 1 (research): \u20B98 crore. Phase 2 (development, all criteria met from Jan): \u20B912 crore. How to account under Ind AS 38?'},
+        {l:'Fair Value Level 3 Unlisted',t:'Company holds unlisted equity investment. DCF valuation: projected FCF \u20B915 crore growing at 8%, WACC 14%, terminal growth 4%. Previous carrying amount \u20B970 crore.'},
+      ].map((ex,i)=><div key={i} style={{fontSize:12,color:'#475569',padding:'6px 8px',borderRadius:6,cursor:'pointer',marginBottom:2,lineHeight:1.4,borderLeft:'2px solid #e2e8f0'}} onClick={()=>onCase(ex.t)} onMouseOver={e=>{e.currentTarget.style.background='#f1f5f9';e.currentTarget.style.borderLeftColor='#3b82f6';}} onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderLeftColor='#e2e8f0';}}>{ex.l}</div>)}
+    </div>
+  </div>;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAIN APP
+   ═══════════════════════════════════════════════════════════════════════════ */
+function App(){
+  const [mode,setMode]=useState('quick');
+  const [tx,setTx]=useState('');
+  const [results,setResults]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [noMatch,setNoMatch]=useState(false);
+  const [ctx,setCtx]=useState({industry:INDUSTRIES[0],entityType:ENTITY_TYPES[0]});
+  const [selCase,setSelCase]=useState(null);
+  const [count,setCount]=useState(0);
+  const [inputTab,setInputTab]=useState('text');
+  const fileRef=useRef();
+
+  const doAnalyze=()=>{
+    if(!tx.trim())return;
+    setLoading(true);setResults(null);setNoMatch(false);
+    setTimeout(()=>{
+      const matched=identifyStandards(tx);
+      if(matched.length){setResults(matched);setCount(c=>c+1);}else setNoMatch(true);
+      setLoading(false);
+    },1200);
+  };
+
+  const handleFile=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setTx(ev.target.result.slice(0,1500));r.readAsText(f);};
+
+  return <div style={{display:'flex',flexDirection:'column',height:'100vh',overflow:'hidden'}}>
+    {/* HEADER */}
+    <div className="app-header no-print" style={{padding:'10px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+      <div style={{display:'flex',alignItems:'center',gap:14}}>
+        <div><div style={{color:'#fff',fontWeight:700,fontSize:18}}>Ind AS Accounting Copilot</div><div style={{color:'#93c5fd',fontSize:11}}>From transaction to treatment in under 60 seconds</div></div>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:12}}>
+        {count>0&&<span style={{background:'rgba(255,255,255,.12)',color:'#fff',fontSize:11,padding:'3px 10px',borderRadius:20}}>{count} analyses</span>}
+        <span style={{color:'#93c5fd',fontSize:12,fontWeight:600}}>Vipin Nair</span>
+      </div>
+    </div>
+
+    <div style={{display:'flex',flex:1,overflow:'hidden'}}>
+      <Sidebar mode={mode} setMode={setMode} ctx={ctx} setCtx={setCtx} onCase={t=>{setTx(t);setMode('quick');setResults(null);setNoMatch(false);}}/>
+
+      <div className="main-scroll" style={{padding:24}}>
+        {/* ── CASE STUDIES MODE ── */}
+        {mode==='cases'&&<div style={{maxWidth:880}}>
+          <div style={{fontSize:18,fontWeight:700,color:'#1e293b',marginBottom:4}}>Multi-Standard Case Studies</div>
+          <div style={{fontSize:13,color:'#64748b',marginBottom:16}}>Real-world scenarios involving multiple Ind AS standards with full calculations and journal entries.</div>
+          {!selCase?<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:12}}>
+            {CASES.map(cs=><div key={cs.id} className="cs-card" onClick={()=>setSelCase(cs)}>
+              <div style={{fontSize:14,fontWeight:600,color:'#1e293b',marginBottom:4}}>{cs.title}</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:4,marginBottom:6}}>{cs.stds.map(s=>{const st=Object.values(STDS).find(x=>x.id===s);return <span key={s} style={{background:st?st.bg:'#f1f5f9',color:st?st.color:'#475569',fontSize:10,fontWeight:600,padding:'2px 6px',borderRadius:4}}>{s}</span>;})}</div>
+              <div style={{fontSize:12,color:'#64748b',lineHeight:1.5}}>{cs.short}</div>
+            </div>)}
+          </div>:<div>
+            <button onClick={()=>setSelCase(null)} style={{background:'#fff',border:'1px solid #e2e8f0',borderRadius:8,padding:'6px 14px',fontSize:12,cursor:'pointer',marginBottom:12,color:'#475569'}}>\u2190 Back to all case studies</button>
+            <CaseStudyView cs={selCase} ctx={ctx}/>
+          </div>}
+        </div>}
+
+        {/* ── QUICK / AUDIT MODE ── */}
+        {(mode==='quick'||mode==='audit')&&<div style={{maxWidth:880}}>
+          <div className="card" style={{padding:20}}>
+            <div style={{fontSize:16,fontWeight:700,color:'#1e293b',marginBottom:14}}>
+              {mode==='audit'?' Describe your transaction for audit memo':'\u26A1 Describe your transaction'}
+            </div>
+            <div style={{display:'flex',gap:0,marginBottom:12,background:'#f1f5f9',borderRadius:8,padding:3,width:'fit-content'}}>
+              {[{id:'text',l:'\u270F Type a Transaction'},{id:'file',l:'Upload Document'}].map(t=>
+                <button key={t.id} onClick={()=>setInputTab(t.id)} style={{padding:'6px 14px',border:'none',borderRadius:6,fontSize:12,fontWeight:500,cursor:'pointer',background:inputTab===t.id?'#fff':'transparent',color:inputTab===t.id?'#1e293b':'#64748b',boxShadow:inputTab===t.id?'0 1px 3px rgba(0,0,0,.1)':'none'}}>{t.l}</button>)}
+            </div>
+            {inputTab==='text'?
+              <textarea value={tx} onChange={e=>setTx(e.target.value)} rows={5} placeholder="What happened? Be as specific as possible \u2014 amounts, dates, terms, parties involved.&#10;&#10;Example: Customer paid \u20B950 lakh upfront for a 3-year SaaS license with annual support..." style={{width:'100%',border:'1px solid #e2e8f0',borderRadius:10,padding:14,fontSize:13,color:'#1e293b',lineHeight:1.6,resize:'none'}} onKeyDown={e=>{if(e.key==='Enter'&&e.ctrlKey)doAnalyze();}}/>
+              :<div><div className="upload-zone" onClick={()=>fileRef.current.click()}><div style={{fontSize:28,marginBottom:6}}> </div><div style={{fontSize:14,fontWeight:600,color:'#334155'}}>Upload Contract or Document</div><div style={{fontSize:12,color:'#64748b'}}>Text files (.txt, .csv)</div></div><input ref={fileRef} type="file" accept=".txt,.csv,.md" style={{display:'none'}} onChange={handleFile}/></div>}
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:12,flexWrap:'wrap',gap:8}}>
+              <div style={{fontSize:11,color:'#94a3b8'}}>Context: {ctx.industry} {ctx.entityType}{tx&&<span style={{marginLeft:8,color:'#64748b'}}>Ctrl+Enter to analyse</span>}</div>
+              <div style={{display:'flex',gap:8}}>
+                <button onClick={()=>{setTx('');setResults(null);setNoMatch(false);}} style={{padding:'9px 16px',border:'1px solid #e2e8f0',borderRadius:8,background:'#fff',color:'#475569',fontSize:13,cursor:'pointer'}}>Clear</button>
+                <button onClick={doAnalyze} disabled={loading||!tx.trim()} style={{padding:'9px 24px',border:'none',borderRadius:8,background:loading||!tx.trim()?'#94a3b8':'#1d4ed8',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
+                  {loading&&<Spin/>}{loading?'Analysing...':'\u26A1 Analyse'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {noMatch&&!loading&&<div className="card" style={{marginTop:20,padding:24,textAlign:'center'}}>
+            <div style={{fontSize:28,marginBottom:8}}></div>
+            <div style={{fontWeight:600,color:'#1e293b',marginBottom:4}}>No matching standard identified</div>
+            <div style={{fontSize:13,color:'#64748b',marginBottom:12}}>Try more specific accounting terms: "lease", "revenue", "financial instrument", "impairment", "employee benefits", "deferred tax", "business combination", "ESOP", "biological asset".</div>
+          </div>}
+
+          {results&&!loading&&<ResultsView stds={results} transaction={tx} ctx={ctx}/>}
+
+          {!results&&!loading&&!noMatch&&<div style={{marginTop:24,display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:10}}>
+            {Object.values(STDS).map(s=><div key={s.id} className="card" style={{padding:12,borderLeft:`3px solid ${s.color}`,cursor:'pointer'}} onClick={()=>setTx(s.followUps[0])} onMouseOver={e=>e.currentTarget.style.transform='translateY(-1px)'} onMouseOut={e=>e.currentTarget.style.transform=''}>
+              <span className="std-badge" style={{background:s.bg,color:s.color,marginBottom:4,display:'inline-block',fontSize:11}}>{s.id}</span>
+              <div style={{fontWeight:600,fontSize:12,color:'#1e293b',marginBottom:2}}>{s.title}</div>
+              <Badge l={s.complexity}/>
+            </div>)}
+          </div>}
+        </div>}
+      </div>
+    </div>
+
+    {/* FOOTER */}
+    <div className="no-print" style={{padding:'6px 24px',background:'#fff',borderTop:'1px solid #e2e8f0',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:11,color:'#94a3b8',flexShrink:0}}>
+      <span>Ind AS Accounting Copilot Built by <strong style={{color:'#1e293b'}}>Vipin Nair</strong></span>
+      <span>12 Ind AS Standards 9 Case Studies {INDUSTRIES.length} Industries</span>
+    </div>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
