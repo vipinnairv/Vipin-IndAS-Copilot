@@ -11,7 +11,7 @@
 <style>
 *{box-sizing:border-box;margin:0}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f0f2f5}
-.app-header{background:linear-gradient(135deg,#1d8492 0%,#4fd67c 50%,#1a3a6c 100%)}
+.app-header{background:linear-gradient(135deg,#0c1929 0%,#162d50 50%,#1a3a6c 100%)}
 .sidebar{width:272px;min-width:272px;background:#fff;border-right:1px solid #e2e8f0;overflow-y:auto}
 .main-scroll{flex:1;overflow-y:auto}
 .mode-btn{transition:all .15s;cursor:pointer;border:1px solid transparent;border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:3px}
@@ -86,7 +86,7 @@ const STDS={
   followUps:['How to account for contract modifications?','What if there is a significant financing component?','How to determine SSP when no observable price exists?','When should variable consideration be constrained?'],
 },
 '116':{id:'Ind AS 116',title:'Leases',color:'#7c3aed',bg:'#f5f3ff',complexity:'High',
-  keywords:['lease','lessee','lessor','rent','rental','right of use','rou','finance lease','operating lease','ibl','sublease','sale and leaseback','short term','low value'],
+  keywords:['lease','lessee','lessor','rent','rental','right of use','rou','finance lease','operating lease','ibl','sublease','sale and leaseback','short term','low value','ind as 116','leasing','rental agreement','tenancy','lease liability','rou asset','right-of-use','office lease','vehicle lease','equipment lease','operating lease expense'],
   keyParas:['Para 9','Para 19-21','Para 22-28','Para 26-27','Para 36-46','Para 47-50'],
   industryNotes:{'Real Estate & Construction':'Property leases often have variable payments linked to revenue/index. Carefully assess renewal options — economic incentive test.','Retail & Consumer':'Store leases typically have high renewal certainty. Variable rent (turnover-based) excluded from lease liability if not in-substance fixed.','Aviation':'Aircraft leases are major balance sheet items. Maintenance reserves and return conditions may create additional provisions.'},
   entityNotes:{'Listed / Public Company':'Ind AS 116 significantly impacts leverage ratios and EBITDA. Ensure analyst communication covers lease-adjusted metrics.'},
@@ -109,7 +109,7 @@ const STDS={
   followUps:['How to determine the IBR?','What qualifies as short-term or low-value?','How to handle lease modifications?','How does sale-and-leaseback work?'],
 },
 '109':{id:'Ind AS 109',title:'Financial Instruments',color:'#0f766e',bg:'#f0fdfa',complexity:'High',
-  keywords:['financial instrument','loan','bond','investment','derivative','hedge','hedging','forward','swap','option','ecl','expected credit loss','impairment','fvtpl','fvoci','amortized cost','amortised cost','fair value','receivable','borrowing','debenture','ncd','preference share','equity instrument','debt instrument','credit loss','stage','provision matrix'],
+  keywords:['financial instrument','financial instruments','ind as 109','loan','bond','investment','derivative','hedge','hedging','forward','swap','option','ecl','expected credit loss','impairment','fvtpl','fvoci','amortized cost','amortised cost','fair value','receivable','borrowing','debenture','ncd','preference share','equity instrument','debt instrument','credit loss','stage','provision matrix','classification of financial','banking instrument','financial asset','financial liability'],
   keyParas:['Para 4.1','Para 5.1-5.2','Para 5.5','Para 6.1-6.5','B4.1.1-B4.1.26'],
   industryNotes:{'Banking & Financial Services':'RBI Master Directions on IRACP overlay ECL requirements. Ensure ECL model incorporates RBI-prescribed minimum provisioning norms. Stage 2 criteria may need alignment with SMA classifications.','Insurance':'Investment portfolio classification (amortised cost vs FVOCI) is critical. IRDAI investment regulations may create additional presentation requirements.'},
   entityNotes:{'Bank / NBFC':'RBI circular on ECL implementation requires specific disclosures beyond Ind AS. Consider regulatory vs. accounting provision and DTA implications of the difference.'},
@@ -201,7 +201,7 @@ const STDS={
   followUps:['How to determine the discount rate?','How is leave encashment treated?','What is the difference between DB and DC?'],
 },
 '12':{id:'Ind AS 12',title:'Income Taxes',color:'#6d28d9',bg:'#faf5ff',complexity:'High',
-  keywords:['deferred tax','dta','dtl','temporary difference','income tax','tax rate','mat','minimum alternate tax','mat credit','current tax','tax provision'],
+  keywords:['deferred tax','dta','dtl','temporary difference','income tax','tax rate','mat','minimum alternate tax','mat credit','current tax','tax provision','ind as 12','deferred tax asset','deferred tax liability','tax calculation','tax expense','book profit','taxable profit'],
   keyParas:['Para 5-11','Para 12-31','Para 46-56','Para 57-68','Para 71-76','Para 81'],
   industryNotes:{},entityNotes:{'Bank / NBFC':'ECL provision creates a significant deductible temporary difference. DTA recognition requires careful assessment of future taxable profits.'},
   steps:[
@@ -216,7 +216,7 @@ const STDS={
   followUps:['How does MAT credit work?','Deferred tax on Ind AS 116 leases?','When should DTA not be recognised?'],
 },
 '21':{id:'Ind AS 21',title:'Foreign Exchange',color:'#0891b2',bg:'#ecfeff',complexity:'Medium',
-  keywords:['foreign exchange','forex','usd','eur','gbp','foreign currency','translation','functional currency','presentation currency','monetary','non-monetary','exchange difference','fctr','overseas subsidiary'],
+  keywords:['foreign exchange','forex','usd','eur','gbp','foreign currency','translation','functional currency','presentation currency','monetary','non-monetary','exchange difference','fctr','overseas subsidiary','currency','exchange rate','ind as 21','foreign transaction','currency risk','import','export transaction','remittance','dollar','rupee conversion'],
   keyParas:['Para 9-14','Para 20','Para 23','Para 28','Para 38-49','Para 52-54'],
   industryNotes:{'IT & Software':'Export-oriented IT companies with functional currency INR must restate USD receivables at closing rate. Consider forward contract hedging under Ind AS 109.'},
   entityNotes:{},
@@ -393,7 +393,7 @@ const STDS={
   followUps:['What if construction is partly funded by equity?','How to handle multiple specific borrowings?','Can borrowing costs be capitalised for inventory?'],
 },
 '33':{id:'Ind AS 33',title:'Earnings Per Share',color:'#0891b2',bg:'#ecfeff',complexity:'Low',
-  keywords:['eps','earnings per share','basic eps','diluted eps','weighted average shares','esop dilution','convertible','potential ordinary shares','profit attributable','minority','preference dividend','share buyback','rights issue'],
+  keywords:['eps','earnings per share','basic eps','diluted eps','weighted average shares','esop dilution','convertible','potential ordinary shares','profit attributable','minority','preference dividend','share buyback','rights issue','ind as 33','per share','earning per share','dilution','stock option','share option','profit per share','net profit per share','antidilutive'],
   keyParas:['Para 10-17','Para 19-29','Para 30-63','Para 66-73'],
   industryNotes:{},entityNotes:{'Listed / Public Company':'EPS must be disclosed on the face of the P&L (Profit & Loss statement), not just in Notes. Basic and Diluted EPS are both mandatory for listed companies.'},
   steps:[
@@ -824,8 +824,8 @@ function identifyStandards(text){
   const sorted=Object.entries(scores).sort((a,b)=>b[1]-a[1]).filter(([,s])=>s>0);
   if(!sorted.length)return[];
   const top=sorted[0][1];
-  // return all standards with score >= 40% of top score, or at least 2 keyword hits
-  return sorted.filter(([,s])=>s>=Math.max(2,top*0.35)).map(([k])=>STDS[k]);
+  // single keyword match is enough; use 35% of top score threshold for multi-hit queries
+  return sorted.filter(([,s])=>s>=Math.max(1,top*0.35)).map(([k])=>STDS[k]);
 }
 
 function parseAmounts(text){
